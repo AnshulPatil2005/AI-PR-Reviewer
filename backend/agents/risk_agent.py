@@ -1,6 +1,7 @@
-from agents.openrouter_llm import call_llm
+# backend/agents/risk_agent.py
+from openrouter_llm import call_llm
 
-def assess_risk(title, description, diff):
+def assess_risk(title: str, description: str, diff: str) -> dict:
     prompt = f"""
 You are a senior code reviewer AI.
 

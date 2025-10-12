@@ -1,4 +1,4 @@
-from huggingface_llm import call_llm
+from openrouter_llm import call_llm
 
 def generate_suggestions(title, description, diff):
     prompt = f"""You are an experienced GitHub reviewer.
