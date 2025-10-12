@@ -32,11 +32,23 @@ class AnalyzePRResponse(BaseModel):
     explanation: str
     suggestions: list[str]
 
+# backend/main.py
+from fastapi import FastAPI, HTTPException
+# ... rest same imports ...
+
 @app.post("/analyze", response_model=AnalyzePRResponse)
 async def analyze_pr(request: AnalyzePRRequest):
-    title, description, diff = fetch_pr_details(request.repo_url, request.pr_number)
-    risk_result = assess_risk(title, description, diff)
-    suggestions_result = generate_suggestions(title, description, diff)
+    try:
+        title, description, diff = fetch_pr_details(request.repo_url, request.pr_number)
+    except Exception as e:
+        # Bubble up the real reason (bad URL, missing token, permissions, rate limit, etc.)
+        raise HTTPException(status_code=400, detail=str(e))
+
+    try:
+        risk_result = assess_risk(title, description, diff)
+        suggestions_result = generate_suggestions(title, description, diff)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"LLM error: {e}")
 
     return AnalyzePRResponse(
         risk_score=risk_result.get("risk_score", 50),
