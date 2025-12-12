@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m uvicorn:*)",
+      "Bash(python -c \"import os; from dotenv import load_dotenv; from pathlib import Path; load_dotenv(Path(''backend/.env'')); import requests; r=requests.post(''https://openrouter.ai/api/v1/chat/completions'', headers={''Authorization'': f''Bearer {os.getenv(\"\"OPENROUTER_API_KEY\"\")}'', ''Content-Type'': ''application/json''}, json={''model'': ''google/gemini-2.0-flash-exp:free'', ''messages'': [{''role'': ''user'', ''content'': ''Return JSON: {\"\"message\"\": \"\"hello\"\"}''}]}); print(''Status:'', r.status_code); print(r.text[:500])\")",
+      "Bash(curl:*)",
+      "Bash(python -c \"import os; from dotenv import load_dotenv; from pathlib import Path; load_dotenv(Path(''backend/.env'')); import requests; r=requests.post(''https://openrouter.ai/api/v1/chat/completions'', headers={''Authorization'': f''Bearer {os.getenv(\"\"OPENROUTER_API_KEY\"\")}'', ''Content-Type'': ''application/json''}, json={''model'': ''google/gemini-flash-1.5'', ''messages'': [{''role'': ''user'', ''content'': ''test''}]}); print(''Status:'', r.status_code); print(''Response:'', r.text[:300])\")",
+      "Bash(python -c \"import os; from dotenv import load_dotenv; from pathlib import Path; load_dotenv(Path(''backend/.env'')); import requests; models=[''google/gemini-flash-1.5'', ''google/gemini-2.0-flash-exp:free'', ''anthropic/claude-3-haiku'', ''meta-llama/llama-3.2-3b-instruct:free'']; [(print(f''{m}: {r.status_code}''), print(r.text[:150] if r.status_code==200 else r.json().get(\"\"error\"\",{}).get(\"\"message\"\",\"\"error\"\"))) for m in models for r in [requests.post(''https://openrouter.ai/api/v1/chat/completions'', headers={''Authorization'': f''Bearer {os.getenv(\"\"OPENROUTER_API_KEY\"\")}'', ''Content-Type'': ''application/json''}, json={''model'': m, ''messages'': [{''role'': ''user'', ''content'': ''hi''}]})]]\")"
+    ]
+  }
+}

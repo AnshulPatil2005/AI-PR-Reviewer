@@ -1,5 +1,5 @@
 # backend/agents/risk_agent.py
-from openrouter_llm import call_llm
+from backend.openrouter_llm import call_llm
 
 def assess_risk(title: str, description: str, diff: str) -> dict:
     prompt = f"""

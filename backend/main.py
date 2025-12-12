@@ -1,15 +1,19 @@
 # backend/main.py
 from dotenv import load_dotenv
-load_dotenv()
+from pathlib import Path
+
+# Load .env from backend directory
+env_path = Path(__file__).parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# 👇 Local imports (not prefixed with "backend.")
-from agents.risk_agent import assess_risk
-from agents.suggestion_agent import generate_suggestions
-from github_utils import fetch_pr_details
+# 👇 Local imports (prefixed with "backend." when running from root)
+from backend.agents.risk_agent import assess_risk
+from backend.agents.suggestion_agent import generate_suggestions
+from backend.github_utils import fetch_pr_details
 
 app = FastAPI()
 
