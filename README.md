@@ -165,38 +165,31 @@ npm run dev
 
 ### Current Model Strategy
 
-The application uses a **smart fallback system** with multiple AI models:
+The application uses a **smart fallback system** with multiple **FREE** AI models:
 
 | Priority | Model | Type | Cost | Status |
 |----------|-------|------|------|--------|
-| 1st | `anthropic/claude-3-haiku` | **PAID** | ~$0.0001/request | ✅ Recommended |
-| 2nd | `meta-llama/llama-3.2-3b-instruct:free` | **FREE** | $0 | ✅ Working |
-| 3rd | `google/gemini-2.0-flash-exp:free` | **FREE** | $0 | ⚠️ Rate limited |
-| 4th | `mistralai/mistral-7b-instruct:free` | **FREE** | $0 | ⚠️ Rate limited |
+| 1st | `meta-llama/llama-3.2-3b-instruct:free` | **FREE** | $0 | ✅ Working |
+| 2nd | `google/gemini-2.0-flash-exp:free` | **FREE** | $0 | ⚠️ Rate limited |
+| 3rd | `mistralai/mistral-7b-instruct:free` | **FREE** | $0 | ⚠️ Rate limited |
 
 ### How Model Fallback Works
 
-1. **Primary Model**: Tries Claude 3 Haiku (paid, excellent quality)
-   - If you have OpenRouter credits, uses this
-   - Cost: ~$0.0001 per PR analysis (extremely cheap!)
-   - If no credits or error, automatically falls back
-
-2. **Free Fallback**: Tries Llama 3.2 3B (free, decent quality)
+1. **Primary Model**: Tries Llama 3.2 3B (free, decent quality)
    - Works without credits
    - May have rate limits during peak hours
 
-3. **Additional Fallbacks**: Tries Gemini and Mistral free models
-   - Backup options if others are rate-limited
+2. **Fallback Models**: Tries Gemini and Mistral free models
+   - Backup options if primary model is rate-limited
+   - Ensures availability even during high traffic
 
-4. **Retry Logic**: Exponential backoff (1s, 2s, 4s) for rate limits
+3. **Retry Logic**: Exponential backoff (1s, 2s, 4s) for rate limits
+   - Automatically waits and retries when rate-limited
+   - Seamlessly switches to next available model
 
-### Cost Estimation
+### Cost
 
-With $5 in OpenRouter credits:
-- **~50,000 PR analyses** using Claude 3 Haiku
-- **~25,000 PR analyses** using mixed models
-
-**Recommendation**: Add $5-10 in credits for reliable, high-quality results.
+**100% FREE** - All models use OpenRouter's free tier. No credits required!
 
 ---
 

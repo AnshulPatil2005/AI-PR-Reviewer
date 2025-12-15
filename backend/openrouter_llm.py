@@ -24,10 +24,9 @@ def call_llm(prompt: str, max_retries: int = 3) -> dict:
     Call OpenRouter LLM API with retry logic for rate limits.
     Falls back to alternative models if the primary model is rate-limited.
     """
-    # List of models to try in order (tested and working)
-    # Paid models are very cheap (pennies per request), free models have rate limits
+    # List of free models to try in order (tested and working)
+    # All models are free but have rate limits
     models = [
-        "anthropic/claude-3-haiku",  # PAID: Cheap ($0.25 per 1M tokens), fast, excellent quality
         "meta-llama/llama-3.2-3b-instruct:free",  # FREE: Working, decent quality
         "google/gemini-2.0-flash-exp:free",  # FREE: Rate limited but good
         "mistralai/mistral-7b-instruct:free",  # FREE: Backup option
