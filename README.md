@@ -369,7 +369,7 @@ docker-compose up --build
 #### Backend Deployment
 Deploy FastAPI backend to:
 - **Railway**: Zero-config Python deployment
-- **Render**: Free tier available
+- **Render**: Free tier available (see note below)
 - **AWS Lambda**: Serverless deployment
 - **Azure App Service**: Managed hosting
 - **Google Cloud Run**: Containerized deployment
@@ -387,6 +387,13 @@ Deploy React frontend to:
 - **GitHub Pages**: Free static hosting
 
 **Important**: Update `VITE_API_BASE` in frontend `.env` to your deployed backend URL.
+
+#### ⚠️ Render Free Tier Note
+
+Your free Render instance will spin down with inactivity, which can delay requests by 50 seconds or more. This is expected behavior for the free tier. Options:
+- **Wait**: The first request after inactivity will be slow, subsequent requests will be fast
+- **Upgrade**: Paid tiers keep instances running 24/7
+- **Keep-alive**: Use an external cron service to ping your backend every 10-14 minutes
 
 ---
 
