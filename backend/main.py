@@ -27,14 +27,11 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="AI PR Reviewer", version="2.0.0")
 
-# CORS — read allowed origins from env for cloud deployments
-_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
-_allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
-
+# CORS — allow all origins since auth is JWT Bearer (not cookies)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_allowed_origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
