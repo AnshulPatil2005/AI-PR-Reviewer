@@ -10,12 +10,6 @@ interface AnalysisSummaryProps {
 }
 
 export default function AnalysisSummary({ analysis, darkMode, analysisId }: AnalysisSummaryProps) {
-  const exportUrl = (format: "json" | "pdf") => {
-    const id = analysisId ?? analysis.id;
-    const token = localStorage.getItem("token") ?? "";
-    return `${import.meta.env.VITE_API_BASE || "http://localhost:8000"}/analyses/${id}/export?format=${format}&token=${token}`;
-  };
-
   const handleExport = async (format: "json" | "pdf") => {
     const id = analysisId ?? analysis.id;
     const token = localStorage.getItem("token") ?? "";
