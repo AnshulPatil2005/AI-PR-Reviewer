@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
-from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
@@ -29,9 +29,23 @@ app = FastAPI(title="AI PR Reviewer", version="2.0.0")
 def on_startup():
     try:
         Base.metadata.create_all(bind=engine)
+        print("[OK] DB tables ready")
     except Exception as e:
-        # Log but don't crash — DB might be temporarily unreachable
         print(f"[WARN] DB table creation failed: {e}")
+
+
+# Catch-all exception handler — ensures CORS headers are present even on 500s
+# so the browser can read the error instead of showing a generic CORS block.
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    import traceback
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"{type(exc).__name__}: {exc}"},
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
+
 
 # CORS — allow all origins since auth is JWT Bearer (not cookies)
 app.add_middleware(
