@@ -133,3 +133,31 @@ def fetch_pr_details(repo_url: str, pr_number: int) -> Tuple[str, str, str]:
     diff = resp.text
 
     return title, body, diff
+
+
+def parse_diff_by_file(diff: str, max_chars_per_file: int = 3000) -> dict[str, str]:
+    """
+    Split a unified diff into per-file chunks.
+    Returns {filename: diff_chunk} — each chunk truncated to max_chars_per_file.
+    """
+    files: dict[str, str] = {}
+    current_file: str | None = None
+    current_lines: list[str] = []
+
+    for line in diff.splitlines(keepends=True):
+        if line.startswith("diff --git "):
+            if current_file and current_lines:
+                chunk = "".join(current_lines)
+                files[current_file] = chunk[:max_chars_per_file]
+            # Extract filename from "diff --git a/foo b/foo"
+            parts = line.split(" b/", 1)
+            current_file = parts[1].strip() if len(parts) == 2 else line.strip()
+            current_lines = [line]
+        elif current_file is not None:
+            current_lines.append(line)
+
+    if current_file and current_lines:
+        chunk = "".join(current_lines)
+        files[current_file] = chunk[:max_chars_per_file]
+
+    return files

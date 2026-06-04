@@ -1,29 +1,30 @@
-# backend/agents/risk_agent.py
 from backend.openrouter_llm import call_llm
 
-def assess_risk(title: str, description: str, diff: str) -> dict:
-    prompt = f"""
-You are a senior code reviewer AI.
+_SYSTEM = (
+    "You are a senior code reviewer. Assess pull request changes for risk. "
+    "Respond ONLY with a JSON object — no markdown, no prose."
+)
 
-Given the following pull request information, assess the code changes and return a JSON response with:
-- "risk_score": a number from 0 (low) to 100 (critical)
-- "explanation": a brief reason for the risk
-- "suggestions": an array of improvement tips
+
+def assess_risk(title: str, description: str, diff: str) -> dict:
+    prompt = f"""Analyze this pull request and return a JSON object with:
+- "risk_score": integer 0 (safe) to 100 (critical)
+- "explanation": one concise paragraph explaining the risk level
+- "suggestions": array of 2-4 actionable improvement strings
 
 ### PR Title:
 {title}
 
 ### Description:
-{description}
+{description or "(no description)"}
 
 ### Code Diff:
 {diff}
 
-Respond only in JSON format:
+Respond only with JSON:
 {{
   "risk_score": 0-100,
   "explanation": "...",
   "suggestions": ["...", "..."]
-}}
-"""
-    return call_llm(prompt)
+}}"""
+    return call_llm(prompt, system_prompt=_SYSTEM)
