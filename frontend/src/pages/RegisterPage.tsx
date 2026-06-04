@@ -23,7 +23,13 @@ export default function RegisterPage() {
       await register(email, password);
       navigate("/");
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Registration failed.");
+      if (err?.response) {
+        setError(err.response.data?.detail || `Server error ${err.response.status}`);
+      } else if (err?.request) {
+        setError(`Cannot reach server — check VITE_API_BASE (currently: ${import.meta.env.VITE_API_BASE || "not set, using localhost:8000"})`);
+      } else {
+        setError(err?.message || "Registration failed.");
+      }
     }
   };
 
