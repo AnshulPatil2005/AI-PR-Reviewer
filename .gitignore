@@ -1,7 +1,12 @@
-# Environment variables
+# Environment variables — never commit real secrets
 .env
+**/.env
 backend/.env
-backend/.env.example
+frontend/.env
+
+# .env.example files are safe to commit (no real secrets)
+# backend/.env.example is intentionally NOT ignored
+
 # Python
 __pycache__/
 *.py[cod]
@@ -30,3 +35,8 @@ Thumbs.db
 node_modules/
 dist/
 .cache/
+
+# SQLite database (contains user data)
+*.db
+*.db-shm
+*.db-wal
