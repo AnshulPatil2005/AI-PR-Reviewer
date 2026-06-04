@@ -22,10 +22,16 @@ from backend.database import Base, engine, get_db
 from backend.github_utils import fetch_pr_details, parse_diff_by_file
 from backend.models import Analysis, FileAnalysis, User
 
-# Create all tables on startup
-Base.metadata.create_all(bind=engine)
-
 app = FastAPI(title="AI PR Reviewer", version="2.0.0")
+
+
+@app.on_event("startup")
+def on_startup():
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        # Log but don't crash — DB might be temporarily unreachable
+        print(f"[WARN] DB table creation failed: {e}")
 
 # CORS — allow all origins since auth is JWT Bearer (not cookies)
 app.add_middleware(
