@@ -7,7 +7,10 @@ _SYSTEM = (
 
 
 def generate_suggestions(title: str, description: str, diff: str) -> dict:
-    prompt = f"""Review this pull request and provide specific, actionable improvement suggestions.
+    prompt = f"""Review this pull request and return ONLY this JSON structure with no other keys:
+{{"suggestions": ["string suggestion 1", "string suggestion 2", "string suggestion 3"]}}
+
+Each suggestion MUST be a plain string sentence. Do NOT use objects, arrays, or nested structures inside suggestions.
 
 ### PR Title:
 {title}
@@ -16,8 +19,5 @@ def generate_suggestions(title: str, description: str, diff: str) -> dict:
 {description or "(no description)"}
 
 ### Code Diff:
-{diff}
-
-Return a JSON object:
-{{"suggestions": ["concrete suggestion 1", "concrete suggestion 2", "concrete suggestion 3"]}}"""
+{diff}"""
     return call_llm(prompt, system_prompt=_SYSTEM)

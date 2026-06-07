@@ -385,6 +385,7 @@ def _analysis_to_out(analysis: Analysis) -> AnalysisOut:
         suggestions = json.loads(analysis.suggestions)
     except (json.JSONDecodeError, TypeError):
         suggestions = []
+    suggestions = [_coerce_suggestion(s) for s in suggestions]
     return AnalysisOut(
         id=analysis.id,
         repo_url=analysis.repo_url,
