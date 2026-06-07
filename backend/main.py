@@ -196,6 +196,7 @@ async def analyze_pr(
     suggestions = suggestions_result.get("suggestions", [])
     if not suggestions:
         suggestions = risk_result.get("suggestions", [])
+    suggestions = [_coerce_suggestion(s) for s in suggestions]
 
     # File-level analysis (best-effort — don't fail the whole request if this errors)
     file_diffs = parse_diff_by_file(diff)
@@ -351,6 +352,22 @@ def export_analysis(
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def _coerce_suggestion(s) -> str:
+    """Flatten whatever the LLM returns (string or dict) to a plain string."""
+    if isinstance(s, str):
+        return s
+    if isinstance(s, dict):
+        for key in ("suggestion", "text", "description", "message", "content", "detail"):
+            if key in s and isinstance(s[key], str):
+                val = s[key]
+                file_prefix = s.get("file") or s.get("filename")
+                return f"{file_prefix}: {val}" if file_prefix else val
+        # Fall back: join all string values
+        parts = [str(v) for v in s.values() if v and isinstance(v, str)]
+        return " — ".join(parts) if parts else str(s)
+    return str(s)
+
 
 def _get_owned_analysis(analysis_id: int, user_id: int, db: Session) -> Analysis:
     analysis = db.query(Analysis).filter(
