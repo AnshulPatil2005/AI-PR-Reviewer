@@ -11,7 +11,7 @@ load_dotenv(dotenv_path=env_path)
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from sqlalchemy.orm import Session
 
 from backend.agents.file_agent import analyze_file
@@ -23,6 +23,47 @@ from backend.github_utils import fetch_pr_details, parse_diff_by_file
 from backend.models import Analysis, FileAnalysis, User
 
 app = FastAPI(title="AI PR Reviewer", version="2.0.0")
+
+
+def _coerce_suggestion(s) -> str:
+    """Flatten whatever the LLM returns (string or dict) to a plain string."""
+    if isinstance(s, str):
+        return s
+    if isinstance(s, dict):
+        for key in ("suggestion", "text", "description", "message", "content", "detail"):
+            if key in s and isinstance(s[key], str):
+                val = s[key]
+                file_prefix = s.get("file") or s.get("filename")
+                return f"{file_prefix}: {val}" if file_prefix else val
+        parts = [str(v) for v in s.values() if v and isinstance(v, str)]
+        return " - ".join(parts) if parts else str(s)
+    return str(s)
+
+
+def _normalize_suggestions(raw) -> list[str]:
+    """Accept strings, dict items, JSON text, or wrapped payloads and return plain strings."""
+    if raw is None:
+        return []
+
+    if isinstance(raw, str):
+        stripped = raw.strip()
+        if not stripped:
+            return []
+        try:
+            decoded = json.loads(stripped)
+        except json.JSONDecodeError:
+            return [stripped]
+        return _normalize_suggestions(decoded)
+
+    if isinstance(raw, dict):
+        if "suggestions" in raw:
+            return _normalize_suggestions(raw["suggestions"])
+        return [_coerce_suggestion(raw)]
+
+    if isinstance(raw, list):
+        return [_coerce_suggestion(item) for item in raw]
+
+    return [_coerce_suggestion(raw)]
 
 
 @app.on_event("startup")
@@ -127,6 +168,11 @@ class AnalysisOut(BaseModel):
     class Config:
         from_attributes = True
 
+    @field_validator("suggestions", mode="before")
+    @classmethod
+    def normalize_suggestions(cls, value):
+        return _normalize_suggestions(value)
+
 
 class AnalysisSummary(BaseModel):
     id: int
@@ -196,7 +242,7 @@ async def analyze_pr(
     suggestions = suggestions_result.get("suggestions", [])
     if not suggestions:
         suggestions = risk_result.get("suggestions", [])
-    suggestions = [_coerce_suggestion(s) for s in suggestions]
+    suggestions = _normalize_suggestions(suggestions)
 
     # File-level analysis (best-effort — don't fail the whole request if this errors)
     file_diffs = parse_diff_by_file(diff)
@@ -381,11 +427,7 @@ def _get_owned_analysis(analysis_id: int, user_id: int, db: Session) -> Analysis
 
 
 def _analysis_to_out(analysis: Analysis) -> AnalysisOut:
-    try:
-        suggestions = json.loads(analysis.suggestions)
-    except (json.JSONDecodeError, TypeError):
-        suggestions = []
-    suggestions = [_coerce_suggestion(s) for s in suggestions]
+    suggestions = analysis.suggestions
     return AnalysisOut(
         id=analysis.id,
         repo_url=analysis.repo_url,
