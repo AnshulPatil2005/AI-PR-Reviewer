@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { analysisApi, type JobData } from "../api/endpoints";
+import { describeApiError } from "../api/errors";
 
 type OutletCtx = { darkMode: boolean };
 
@@ -47,7 +48,7 @@ export default function JobStatusPage() {
         window.setTimeout(poll, 1800);
       } catch (err: any) {
         if (!isCancelled) {
-          setError(err?.response?.data?.detail || "Could not load job status.");
+          setError(describeApiError(err, "Could not load job status."));
         }
       }
     };

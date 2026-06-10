@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { analysisApi, type AnalysisSummaryData, type InsightsData } from "../api/endpoints";
+import { describeApiError } from "../api/errors";
 
 type OutletCtx = { darkMode: boolean };
 
@@ -39,8 +40,8 @@ export default function HistoryPage() {
       setAnalyses(analysisRes.data);
       setInsights(insightsRes.data);
       setPage(nextPage);
-    } catch {
-      setError("Failed to load analysis history.");
+    } catch (err: any) {
+      setError(describeApiError(err, "Failed to load analysis history."));
     } finally {
       setLoading(false);
     }

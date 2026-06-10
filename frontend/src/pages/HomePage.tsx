@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useOutletContext } from "react-router-dom";
 import { analysisApi, type ReviewMode } from "../api/endpoints";
+import { describeApiError } from "../api/errors";
 import { useAuth } from "../context/AuthContext";
 
 type OutletCtx = { darkMode: boolean };
@@ -57,7 +58,7 @@ export default function HomePage() {
       const res = await analysisApi.createJob(trimmedUrl, pr, reviewMode);
       navigate(`/jobs/${res.data.id}`);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Could not create review job.");
+      setError(describeApiError(err, "Could not create review job."));
     } finally {
       setLoading(false);
     }

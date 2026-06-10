@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { analysisApi, type AnalysisData, type ComparisonData } from "../api/endpoints";
+import { describeApiError } from "../api/errors";
 import AnalysisSummary from "../components/AnalysisSummary";
 
 type OutletCtx = { darkMode: boolean };
@@ -23,7 +24,7 @@ export default function AnalysisDetailPage() {
         if (analysisRes.status === "fulfilled") {
           setAnalysis(analysisRes.value.data);
         } else {
-          setError("Analysis not found.");
+          setError(describeApiError((analysisRes as PromiseRejectedResult).reason, "Analysis not found."));
         }
         if (compareRes.status === "fulfilled") {
           setComparison(compareRes.value.data);
@@ -39,7 +40,7 @@ export default function AnalysisDetailPage() {
       const res = await analysisApi.rerun(analysis.id);
       navigate(`/jobs/${res.data.id}`);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Could not rerun analysis.");
+      setError(describeApiError(err, "Could not rerun analysis."));
     } finally {
       setRerunning(false);
     }
