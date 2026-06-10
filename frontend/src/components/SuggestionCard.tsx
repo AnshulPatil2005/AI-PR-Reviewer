@@ -7,16 +7,16 @@ interface SuggestionCardProps {
 export default function SuggestionCard({ suggestion, index, darkMode }: SuggestionCardProps) {
   return (
     <div
-      className={`flex gap-3 p-3 rounded-lg border text-sm ${
-        darkMode
-          ? "bg-slate-800 border-slate-700 text-slate-200"
-          : "bg-slate-50 border-slate-200 text-slate-800"
+      className={`rounded-2xl border p-4 text-sm ${
+        darkMode ? "bg-slate-900/80 border-slate-700 text-slate-200" : "bg-white border-slate-200 text-slate-800"
       }`}
     >
-      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">
-        {index}
-      </span>
-      <p>{suggestion}</p>
+      <div className="flex items-center gap-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">
+          {index}
+        </span>
+        <p className="font-medium leading-relaxed">{suggestion}</p>
+      </div>
     </div>
   );
 }

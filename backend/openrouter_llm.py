@@ -1,12 +1,13 @@
+import json
 import os
 import re
-import json
 import time
-import requests
-from dotenv import load_dotenv
 from pathlib import Path
 
-env_path = Path(__file__).parent / '.env'
+import requests
+from dotenv import load_dotenv
+
+env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
@@ -20,25 +21,24 @@ _HEADERS = {
 }
 
 _MODELS = [
-    "google/gemma-4-31b-it:free",       # best quality of current free tier
+    "google/gemma-4-31b-it:free",
     "nvidia/nemotron-3-nano-30b-a3b:free",
     "z-ai/glm-4.5-air:free",
     "nvidia/nemotron-nano-9b-v2:free",
-    "meta-llama/llama-3.2-3b-instruct:free",  # fallback
+    "meta-llama/llama-3.2-3b-instruct:free",
 ]
 
 _MAX_DIFF_CHARS = 6000
 
 
 def _truncate_diff(prompt: str) -> str:
-    """Truncate very long diffs so they fit within free-model context windows."""
     if len(prompt) > _MAX_DIFF_CHARS:
         return prompt[:_MAX_DIFF_CHARS] + "\n\n[...diff truncated for length...]"
     return prompt
 
 
 def _extract_json(content: str) -> dict | None:
-    match = re.search(r'\{.*\}', content, re.DOTALL)
+    match = re.search(r"\{.*\}", content, re.DOTALL)
     if not match:
         return None
     try:
@@ -54,8 +54,11 @@ def call_llm(
 ) -> dict:
     prompt = _truncate_diff(prompt)
     last_error = None
+    attempted_models: list[str] = []
+    last_model: str | None = None
 
     for model in _MODELS:
+        attempted_models.append(model)
         for attempt in range(max_retries):
             try:
                 payload = {
@@ -68,23 +71,35 @@ def call_llm(
                 response = requests.post(API_URL, headers=_HEADERS, json=payload, timeout=30)
                 response.raise_for_status()
                 content = response.json()["choices"][0]["message"]["content"]
+                last_model = model
                 print(f"[OK] Model used: {model}")
 
                 parsed = _extract_json(content)
+                meta = {
+                    "model": model,
+                    "attempted_models": attempted_models,
+                    "fallback_used": len(attempted_models) > 1,
+                }
                 if parsed is not None:
                     parsed.setdefault("risk_score", 50)
                     parsed.setdefault("explanation", "No explanation provided.")
                     parsed.setdefault("suggestions", [])
+                    parsed["_meta"] = {**meta, "raw_parse_ok": True}
                     return parsed
 
                 print("[WARN] Could not parse JSON from model output")
-                return {"risk_score": 50, "explanation": "Could not parse model output", "suggestions": []}
+                return {
+                    "risk_score": 50,
+                    "explanation": "Could not parse model output",
+                    "suggestions": [],
+                    "_meta": {**meta, "raw_parse_ok": False},
+                }
 
             except requests.exceptions.HTTPError as e:
                 last_error = e
                 if e.response and e.response.status_code == 429:
                     if attempt < max_retries - 1:
-                        wait_time = 2 ** attempt
+                        wait_time = 2**attempt
                         print(f"Rate limited on {model}, retrying in {wait_time}s...")
                         time.sleep(wait_time)
                         continue
@@ -103,7 +118,14 @@ def call_llm(
         "risk_score": 50,
         "explanation": f"All LLM models unavailable. Error: {error_msg}",
         "suggestions": [
-            "OpenRouter free tier has strict rate limits — wait a few minutes and retry.",
+            "OpenRouter free tier has strict rate limits. Wait a few minutes and retry.",
             "Check your OPENROUTER_API_KEY.",
         ],
+        "_meta": {
+            "model": last_model,
+            "attempted_models": attempted_models,
+            "fallback_used": len(attempted_models) > 1,
+            "raw_parse_ok": False,
+            "error": error_msg,
+        },
     }

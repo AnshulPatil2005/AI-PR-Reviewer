@@ -1,31 +1,44 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import { analysisApi } from "../api/endpoints";
-import type { AnalysisSummaryData } from "../api/endpoints";
+import { analysisApi, type AnalysisSummaryData, type InsightsData } from "../api/endpoints";
 
 type OutletCtx = { darkMode: boolean };
 
 function riskBadge(score: number): string {
-  if (score <= 33) return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
-  if (score <= 66) return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
-  return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+  if (score <= 33) return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300";
+  if (score <= 66) return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300";
+  return "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300";
 }
 
 export default function HistoryPage() {
   const { darkMode } = useOutletContext<OutletCtx>();
   const navigate = useNavigate();
   const [analyses, setAnalyses] = useState<AnalysisSummaryData[]>([]);
+  const [insights, setInsights] = useState<InsightsData | null>(null);
   const [page, setPage] = useState(1);
+  const [repo, setRepo] = useState("");
+  const [sort, setSort] = useState<"newest" | "highest_risk">("newest");
+  const [riskMin, setRiskMin] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchPage = async (p: number) => {
+  const fetchPage = async (nextPage: number, nextRepo = repo, nextSort = sort, nextRiskMin = riskMin) => {
     setLoading(true);
     setError("");
     try {
-      const res = await analysisApi.list(p, 20);
-      setAnalyses(res.data);
-      setPage(p);
+      const [analysisRes, insightsRes] = await Promise.all([
+        analysisApi.list({
+          page: nextPage,
+          limit: 20,
+          repo: nextRepo || undefined,
+          risk_min: nextRiskMin ? Number(nextRiskMin) : undefined,
+          sort: nextSort,
+        }),
+        analysisApi.insights(),
+      ]);
+      setAnalyses(analysisRes.data);
+      setInsights(insightsRes.data);
+      setPage(nextPage);
     } catch {
       setError("Failed to load analysis history.");
     } finally {
@@ -33,92 +46,160 @@ export default function HistoryPage() {
     }
   };
 
-  useEffect(() => { fetchPage(1); }, []);
+  useEffect(() => {
+    fetchPage(1);
+  }, []);
 
-  const handleDelete = async (id: number, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDelete = async (id: number, event: React.MouseEvent) => {
+    event.stopPropagation();
     if (!confirm("Delete this analysis?")) return;
     await analysisApi.delete(id);
-    setAnalyses((prev) => prev.filter((a) => a.id !== id));
+    setAnalyses((prev) => prev.filter((item) => item.id !== id));
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold mb-6 text-blue-600 dark:text-blue-400">Analysis History</h1>
+    <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm uppercase tracking-[0.24em] text-cyan-500">History Dashboard</p>
+          <h1 className="mt-2 text-3xl font-bold">Past reviews, reruns, and repo trends</h1>
+        </div>
+      </div>
 
-      {loading && <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Loading...</p>}
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      <div className="mt-6 grid gap-4 lg:grid-cols-[1fr,1fr,220px,220px]">
+        <input
+          value={repo}
+          onChange={(event) => setRepo(event.target.value)}
+          placeholder="Filter by repo URL"
+          className={`rounded-2xl border px-4 py-3 text-sm ${darkMode ? "border-slate-700 bg-slate-900 text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}
+        />
+        <input
+          value={riskMin}
+          onChange={(event) => setRiskMin(event.target.value)}
+          placeholder="Minimum risk"
+          className={`rounded-2xl border px-4 py-3 text-sm ${darkMode ? "border-slate-700 bg-slate-900 text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}
+        />
+        <select
+          value={sort}
+          onChange={(event) => setSort(event.target.value as "newest" | "highest_risk")}
+          className={`rounded-2xl border px-4 py-3 text-sm ${darkMode ? "border-slate-700 bg-slate-900 text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}
+        >
+          <option value="newest">Newest</option>
+          <option value="highest_risk">Highest Risk</option>
+        </select>
+        <button
+          onClick={() => fetchPage(1, repo, sort, riskMin)}
+          className="rounded-2xl bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-cyan-700"
+        >
+          Apply Filters
+        </button>
+      </div>
 
-      {!loading && analyses.length === 0 && (
-        <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-          No analyses yet.{" "}
-          <button onClick={() => navigate("/")} className="text-blue-500 hover:underline">
-            Analyze a PR
-          </button>
-          .
-        </p>
-      )}
-
-      {analyses.length > 0 && (
-        <div className={`rounded-xl border overflow-hidden ${darkMode ? "border-slate-700" : "border-slate-200"}`}>
-          <table className="w-full text-sm">
-            <thead className={darkMode ? "bg-slate-800 text-slate-300" : "bg-slate-50 text-slate-600"}>
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold">Date</th>
-                <th className="px-4 py-3 text-left font-semibold">Repository</th>
-                <th className="px-4 py-3 text-left font-semibold">PR</th>
-                <th className="px-4 py-3 text-left font-semibold">Risk</th>
-                <th className="px-4 py-3 text-left font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {analyses.map((a, i) => (
-                <tr
-                  key={a.id}
-                  onClick={() => navigate(`/analysis/${a.id}`)}
-                  className={`cursor-pointer border-t transition ${
-                    darkMode
-                      ? `border-slate-700 ${i % 2 === 0 ? "bg-slate-900" : "bg-slate-800/60"} hover:bg-slate-700`
-                      : `border-slate-100 ${i % 2 === 0 ? "bg-white" : "bg-slate-50/60"} hover:bg-slate-100`
-                  }`}
-                >
-                  <td className="px-4 py-3 whitespace-nowrap text-xs opacity-70">
-                    {new Date(a.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3 max-w-xs truncate">
-                    {a.repo_url.replace("https://github.com/", "")}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="font-mono">#{a.pr_number}</span>
-                    {a.pr_title && (
-                      <span className="ml-2 opacity-60 truncate hidden md:inline">{a.pr_title}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${riskBadge(a.risk_score)}`}>
-                      {a.risk_score}/100
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={(e) => handleDelete(a.id, e)}
-                      className="text-xs text-red-500 hover:text-red-700 hover:underline"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
+      {insights && (
+        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+          <div className={`rounded-3xl border p-5 ${darkMode ? "border-slate-700 bg-slate-900/80" : "border-slate-200 bg-white"}`}>
+            <p className="text-sm font-semibold">Most analyzed repos</p>
+            <div className="mt-3 space-y-2 text-sm">
+              {insights.most_analyzed_repos.map((item) => (
+                <p key={item.repo_url} className={darkMode ? "text-slate-300" : "text-slate-700"}>
+                  {item.repo_url.replace("https://github.com/", "")} • {item.count}
+                </p>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </div>
+          <div className={`rounded-3xl border p-5 ${darkMode ? "border-slate-700 bg-slate-900/80" : "border-slate-200 bg-white"}`}>
+            <p className="text-sm font-semibold">Average risk by repo</p>
+            <div className="mt-3 space-y-2 text-sm">
+              {insights.average_risk_by_repo.map((item) => (
+                <p key={item.repo_url} className={darkMode ? "text-slate-300" : "text-slate-700"}>
+                  {item.repo_url.replace("https://github.com/", "")} • {item.average_risk}/100
+                </p>
+              ))}
+            </div>
+          </div>
+          <div className={`rounded-3xl border p-5 ${darkMode ? "border-slate-700 bg-slate-900/80" : "border-slate-200 bg-white"}`}>
+            <p className="text-sm font-semibold">Recent high-risk PRs</p>
+            <div className="mt-3 space-y-2 text-sm">
+              {insights.recent_high_risk_prs.map((item) => (
+                <button
+                  key={item.analysis_id}
+                  onClick={() => navigate(`/analysis/${item.analysis_id}`)}
+                  className={`block text-left ${darkMode ? "text-slate-300 hover:text-cyan-300" : "text-slate-700 hover:text-cyan-600"}`}
+                >
+                  {item.repo_url.replace("https://github.com/", "")} #{item.pr_number} • {item.risk_score}/100
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="flex gap-2 mt-4 justify-end">
+      <div className="mt-6">
+        {loading && <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Loading...</p>}
+        {error && <p className="text-sm text-rose-500">{error}</p>}
+
+        {!loading && analyses.length === 0 && (
+          <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
+            No analyses match these filters.
+          </p>
+        )}
+
+        {analyses.length > 0 && (
+          <div className="grid gap-4">
+            {analyses.map((analysis) => (
+              <article
+                key={analysis.id}
+                onClick={() => navigate(`/analysis/${analysis.id}`)}
+                className={`cursor-pointer rounded-[2rem] border p-5 transition ${
+                  darkMode ? "border-slate-700 bg-slate-900/80 hover:border-slate-500" : "border-slate-200 bg-white hover:border-slate-300"
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="font-semibold">{analysis.repo_url.replace("https://github.com/", "")}</p>
+                    <p className={`mt-1 text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
+                      PR #{analysis.pr_number} {analysis.pr_title ? `• ${analysis.pr_title}` : ""}
+                    </p>
+                    <p className={`mt-2 text-xs uppercase tracking-[0.22em] ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
+                      {analysis.review_mode} • {new Date(analysis.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${riskBadge(analysis.risk_score)}`}>
+                      {analysis.risk_score}/100
+                    </span>
+                    <button
+                      onClick={(event) => handleDelete(analysis.id, event)}
+                      className="text-xs text-rose-500 hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {analysis.top_priorities.slice(0, 3).map((priority) => (
+                    <span
+                      key={priority}
+                      className={`rounded-full px-3 py-1 text-xs ${
+                        darkMode ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {priority}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 flex justify-end gap-2">
         {page > 1 && (
           <button
             onClick={() => fetchPage(page - 1)}
-            className="px-3 py-1 text-sm rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            className="rounded-full border px-4 py-2 text-sm transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
           >
             Previous
           </button>
@@ -126,7 +207,7 @@ export default function HistoryPage() {
         {analyses.length === 20 && (
           <button
             onClick={() => fetchPage(page + 1)}
-            className="px-3 py-1 text-sm rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            className="rounded-full border px-4 py-2 text-sm transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
           >
             Next
           </button>

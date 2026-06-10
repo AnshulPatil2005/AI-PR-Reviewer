@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import HistoryPage from "./pages/HistoryPage";
 import AnalysisDetailPage from "./pages/AnalysisDetailPage";
+import JobStatusPage from "./pages/JobStatusPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 export const router = createBrowserRouter([
@@ -28,6 +29,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <AnalysisDetailPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "jobs/:id",
+        element: (
+          <ProtectedRoute>
+            <JobStatusPage />
           </ProtectedRoute>
         ),
       },
