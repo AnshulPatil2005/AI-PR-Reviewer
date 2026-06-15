@@ -14,7 +14,7 @@ load_dotenv(dotenv_path=env_path)
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
@@ -183,6 +183,8 @@ class FileSummaryOut(BaseModel):
 
 
 class AnalysisOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
+
     id: int
     repo_url: str
     pr_number: int
@@ -201,9 +203,6 @@ class AnalysisOut(BaseModel):
     review_mode: str = "general"
     status: str = "completed"
     created_at: str
-
-    class Config:
-        from_attributes = True
 
     @field_validator("suggestions", "top_priorities", mode="before")
     @classmethod
@@ -275,6 +274,8 @@ class RepoAnalyticsOut(BaseModel):
 
 
 class ComparisonOut(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+
     baseline_analysis_id: int | None
     current_analysis_id: int
     risk_delta: int
