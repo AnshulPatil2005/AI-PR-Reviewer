@@ -48,6 +48,29 @@ export default function App() {
               >
                 History
               </Link>
+              <Link
+                to="/repos"
+                className={`text-sm font-medium hover:text-blue-500 transition ${
+                  darkMode ? "text-slate-300" : "text-slate-600"
+                }`}
+              >
+                Repo Analytics
+              </Link>
+              {/* Quota badge */}
+              {user.monthly_quota > 0 && (
+                <span
+                  title={`Resets ${user.quota_resets_on ?? "next month"}`}
+                  className={`hidden sm:inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${
+                    user.analyses_this_month >= user.monthly_quota
+                      ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400"
+                      : user.analyses_this_month >= user.monthly_quota * 0.8
+                      ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400"
+                      : "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400"
+                  }`}
+                >
+                  {user.analyses_this_month}/{user.monthly_quota} this month
+                </span>
+              )}
               <span className={`text-xs hidden sm:block ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
                 {user.email}
               </span>

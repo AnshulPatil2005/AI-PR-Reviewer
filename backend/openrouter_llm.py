@@ -21,11 +21,18 @@ _HEADERS = {
 }
 
 _MODELS = [
+    "deepseek/deepseek-r1-0528:free",
+    "deepseek/deepseek-chat-v3-0324:free",
     "google/gemma-4-31b-it:free",
+    "qwen/qwen3-235b-a22b:free",
+    "qwen/qwen3-30b-a3b:free",
+    "microsoft/phi-4-reasoning:free",
     "nvidia/nemotron-3-nano-30b-a3b:free",
     "z-ai/glm-4.5-air:free",
     "nvidia/nemotron-nano-9b-v2:free",
+    "mistralai/mistral-7b-instruct:free",
     "meta-llama/llama-3.2-3b-instruct:free",
+    "google/gemma-2-9b-it:free",
 ]
 
 _MAX_DIFF_CHARS = 6000
@@ -50,7 +57,7 @@ def _extract_json(content: str) -> dict | None:
 def call_llm(
     prompt: str,
     system_prompt: str = "You are a code quality auditor. Return a JSON object.",
-    max_retries: int = 3,
+    max_retries: int = 2,
 ) -> dict:
     prompt = _truncate_diff(prompt)
     last_error = None

@@ -1,6 +1,7 @@
 import json
 import threading
 import time
+from datetime import datetime, timedelta
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Literal
@@ -18,6 +19,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from backend.analysis_pipeline import REVIEW_MODES, analyze_pull_request
+from backend.repo_analytics import get_repo_stats
 from backend.auth import create_access_token, get_current_user, hash_password, verify_password
 from backend.database import Base, SessionLocal, engine, ensure_runtime_schema, get_db
 from backend.github_utils import fetch_pr_details
@@ -128,6 +130,9 @@ class TokenResponse(BaseModel):
 class UserOut(BaseModel):
     id: int
     email: str
+    monthly_quota: int = 10
+    analyses_this_month: int = 0
+    quota_resets_on: str | None = None
 
     class Config:
         from_attributes = True
@@ -252,6 +257,23 @@ class InsightsOut(BaseModel):
     recent_high_risk_prs: list[dict[str, Any]]
 
 
+class RepoAnalyticsOut(BaseModel):
+    repo_name: str
+    description: str
+    language: str
+    stars: int
+    forks: int
+    open_issues: int
+    open_prs: int
+    prs_merged_last_30d: int
+    top_contributors: list[str]
+    last_pushed_at: str | None
+    analyses_count: int
+    avg_risk_score: float | None
+    risk_trend: list[int]
+    hot_files: list[str]
+
+
 class ComparisonOut(BaseModel):
     baseline_analysis_id: int | None
     current_analysis_id: int
@@ -294,7 +316,18 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
 
 @app.get("/auth/me", response_model=UserOut)
 def me(current_user: User = Depends(get_current_user)):
-    return current_user
+    now = datetime.utcnow()
+    if now.month == 12:
+        next_reset = now.replace(year=now.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    else:
+        next_reset = now.replace(month=now.month + 1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    return UserOut(
+        id=current_user.id,
+        email=current_user.email,
+        monthly_quota=getattr(current_user, "monthly_quota", 10) or 10,
+        analyses_this_month=getattr(current_user, "analyses_this_month", 0) or 0,
+        quota_resets_on=next_reset.strftime("%Y-%m-%d"),
+    )
 
 
 def _job_to_out(job: AnalysisJob) -> JobOut:
@@ -519,9 +552,67 @@ def _run_job(job_id: int):
         db.close()
 
 
+def _check_and_increment_quota(user: User, db: Session) -> None:
+    now = datetime.utcnow()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    reset_date = getattr(user, "quota_reset_date", None)
+    this_month = getattr(user, "analyses_this_month", 0) or 0
+    quota = getattr(user, "monthly_quota", 10) or 10
+
+    if reset_date is None or reset_date < month_start:
+        user.analyses_this_month = 0
+        user.quota_reset_date = month_start
+        this_month = 0
+
+    if this_month >= quota:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Monthly quota reached ({quota} analyses). Resets on the 1st of next month.",
+        )
+
+    user.analyses_this_month = this_month + 1
+    db.commit()
+
+
 def _create_job(payload: AnalyzePRRequest, current_user: User, db: Session) -> AnalysisJob:
     if payload.review_mode not in REVIEW_MODES:
         raise HTTPException(status_code=400, detail="Invalid review mode.")
+
+    # Return cached result if same PR was analyzed within 24h with the same review mode
+    cutoff = datetime.utcnow() - timedelta(hours=24)
+    cached = (
+        db.query(Analysis)
+        .filter(
+            Analysis.user_id == current_user.id,
+            Analysis.repo_url == payload.repo_url.strip(),
+            Analysis.pr_number == payload.pr_number,
+            Analysis.review_mode == payload.review_mode,
+            Analysis.is_deleted == False,
+            Analysis.status == "completed",
+            Analysis.created_at >= cutoff,
+        )
+        .order_by(Analysis.created_at.desc())
+        .first()
+    )
+    if cached:
+        job = AnalysisJob(
+            user_id=current_user.id,
+            repo_url=payload.repo_url.strip(),
+            pr_number=payload.pr_number,
+            review_mode=payload.review_mode,
+            status="completed",
+            stage="cached",
+            progress=1.0,
+            error_message="",
+            analysis_id=cached.id,
+        )
+        db.add(job)
+        db.commit()
+        db.refresh(job)
+        return job
+
+    _check_and_increment_quota(current_user, db)
+
     job = AnalysisJob(
         user_id=current_user.id,
         repo_url=payload.repo_url.strip(),
@@ -677,6 +768,57 @@ def analysis_insights(
             }
             for row in recent_high
         ],
+    )
+
+
+@app.get("/repos/analytics", response_model=RepoAnalyticsOut)
+def repo_analytics(
+    repo_url: str = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        github_stats = get_repo_stats(repo_url)
+    except (ValueError, EnvironmentError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Aggregate from our DB: analyses this user ran on this repo
+    analyses = (
+        db.query(Analysis)
+        .filter(
+            Analysis.user_id == current_user.id,
+            Analysis.repo_url == repo_url,
+            Analysis.is_deleted == False,
+            Analysis.status == "completed",
+        )
+        .order_by(Analysis.created_at.desc())
+        .all()
+    )
+    risk_scores = [a.risk_score for a in analyses]
+    avg_risk = round(sum(risk_scores) / len(risk_scores), 1) if risk_scores else None
+    risk_trend = list(reversed(risk_scores[:10]))  # oldest → newest
+
+    hot_files = (
+        db.query(FileAnalysis.filename, func.avg(FileAnalysis.risk_score).label("avg_risk"))
+        .join(Analysis)
+        .filter(
+            Analysis.user_id == current_user.id,
+            Analysis.repo_url == repo_url,
+            Analysis.is_deleted == False,
+            FileAnalysis.risk_score >= 60,
+        )
+        .group_by(FileAnalysis.filename)
+        .order_by(func.avg(FileAnalysis.risk_score).desc())
+        .limit(5)
+        .all()
+    )
+
+    return RepoAnalyticsOut(
+        **github_stats,
+        analyses_count=len(analyses),
+        avg_risk_score=avg_risk,
+        risk_trend=risk_trend,
+        hot_files=[row.filename for row in hot_files],
     )
 
 

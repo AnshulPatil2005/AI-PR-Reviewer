@@ -121,12 +121,42 @@ export interface AuthResponse {
   email: string;
 }
 
+export interface UserData {
+  id: number;
+  email: string;
+  monthly_quota: number;
+  analyses_this_month: number;
+  quota_resets_on: string | null;
+}
+
+export interface RepoAnalyticsData {
+  repo_name: string;
+  description: string;
+  language: string;
+  stars: number;
+  forks: number;
+  open_issues: number;
+  open_prs: number;
+  prs_merged_last_30d: number;
+  top_contributors: string[];
+  last_pushed_at: string | null;
+  analyses_count: number;
+  avg_risk_score: number | null;
+  risk_trend: number[];
+  hot_files: string[];
+}
+
 export const authApi = {
   register: (email: string, password: string) =>
     client.post<AuthResponse>("/auth/register", { email, password }),
   login: (email: string, password: string) =>
     client.post<AuthResponse>("/auth/login", { email, password }),
-  me: () => client.get<{ id: number; email: string }>("/auth/me"),
+  me: () => client.get<UserData>("/auth/me"),
+};
+
+export const repoApi = {
+  analytics: (repo_url: string) =>
+    client.get<RepoAnalyticsData>("/repos/analytics", { params: { repo_url } }),
 };
 
 export const analysisApi = {

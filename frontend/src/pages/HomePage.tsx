@@ -19,7 +19,7 @@ function isGitHubRepoUrl(value: string) {
 
 export default function HomePage() {
   const { darkMode } = useOutletContext<OutletCtx>();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [repoUrl, setRepoUrl] = useState(localStorage.getItem("repoUrl") || "");
   const [prNumber, setPrNumber] = useState(localStorage.getItem("prNumber") || "");
@@ -56,9 +56,11 @@ export default function HomePage() {
     try {
       setLoading(true);
       const res = await analysisApi.createJob(trimmedUrl, pr, reviewMode);
+      refreshUser(); // update quota badge (fire-and-forget)
       navigate(`/jobs/${res.data.id}`);
     } catch (err: any) {
-      setError(describeApiError(err, "Could not create review job."));
+      const msg = describeApiError(err, "Could not create review job.");
+      setError(err?.response?.status === 429 ? `Monthly quota reached. ${msg}` : msg);
     } finally {
       setLoading(false);
     }
@@ -155,9 +157,14 @@ export default function HomePage() {
               </div>
             )}
 
+            {user && user.analyses_this_month >= user.monthly_quota && (
+              <p className={`text-sm text-center rounded-2xl border p-3 ${darkMode ? "border-red-800 bg-red-900/30 text-red-400" : "border-red-200 bg-red-50 text-red-600"}`}>
+                Monthly limit reached ({user.monthly_quota} analyses). Resets {user.quota_resets_on ?? "next month"}.
+              </p>
+            )}
             <button
               onClick={handleAnalyze}
-              disabled={loading}
+              disabled={loading || (!!user && user.analyses_this_month >= user.monthly_quota)}
               className="w-full rounded-2xl bg-cyan-600 px-6 py-4 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Creating Review Job..." : "Start PR Review"}

@@ -1,10 +1,14 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { authApi } from "../api/endpoints";
+import type { UserData } from "../api/endpoints";
 
 interface AuthUser {
   id: number;
   email: string;
+  monthly_quota: number;
+  analyses_this_month: number;
+  quota_resets_on: string | null;
 }
 
 interface AuthContextValue {
@@ -13,10 +17,21 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+function toAuthUser(data: UserData): AuthUser {
+  return {
+    id: data.id,
+    email: data.email,
+    monthly_quota: data.monthly_quota ?? 10,
+    analyses_this_month: data.analyses_this_month ?? 0,
+    quota_resets_on: data.quota_resets_on ?? null,
+  };
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => {
@@ -26,11 +41,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
   const [isLoading, setIsLoading] = useState(false);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const res = await authApi.me();
+      const authUser = toAuthUser(res.data);
+      localStorage.setItem("user", JSON.stringify(authUser));
+      setUser(authUser);
+    } catch {
+      // silently fail — token may have expired
+    }
+  }, []);
+
   useEffect(() => {
     if (token && !user) {
-      authApi.me()
-        .then((res) => setUser(res.data))
-        .catch(() => logout());
+      refreshUser();
     }
   }, []);
 
@@ -45,7 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const res = await authApi.login(email, password);
-      _saveSession(res.data.access_token, { id: res.data.user_id, email: res.data.email });
+      // Fetch full user data (with quota) after login
+      localStorage.setItem("token", res.data.access_token);
+      setToken(res.data.access_token);
+      const meRes = await authApi.me();
+      _saveSession(res.data.access_token, toAuthUser(meRes.data));
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +83,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const res = await authApi.register(email, password);
-      _saveSession(res.data.access_token, { id: res.data.user_id, email: res.data.email });
+      localStorage.setItem("token", res.data.access_token);
+      setToken(res.data.access_token);
+      const meRes = await authApi.me();
+      _saveSession(res.data.access_token, toAuthUser(meRes.data));
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, refreshUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

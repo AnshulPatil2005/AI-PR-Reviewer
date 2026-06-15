@@ -15,6 +15,18 @@ Base = declarative_base()
 def ensure_runtime_schema():
     inspector = inspect(engine)
 
+    if "users" in inspector.get_table_names():
+        existing = {col["name"] for col in inspector.get_columns("users")}
+        additions = {
+            "monthly_quota": "INTEGER DEFAULT 10",
+            "analyses_this_month": "INTEGER DEFAULT 0",
+            "quota_reset_date": "DATETIME",
+        }
+        with engine.begin() as conn:
+            for name, ddl in additions.items():
+                if name not in existing:
+                    conn.execute(text(f"ALTER TABLE users ADD COLUMN {name} {ddl}"))
+
     if "analyses" in inspector.get_table_names():
         existing = {col["name"] for col in inspector.get_columns("analyses")}
         additions = {

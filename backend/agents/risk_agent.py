@@ -7,10 +7,14 @@ _SYSTEM = (
 
 
 def assess_risk(title: str, description: str, diff: str) -> dict:
-    prompt = f"""Analyze this pull request and return a JSON object with:
-- "risk_score": integer 0 (safe) to 100 (critical)
-- "explanation": one concise paragraph explaining the risk level
-- "suggestions": array of 2-4 actionable improvement strings
+    prompt = f"""Analyze this pull request. Return ONLY this JSON structure:
+{{
+  "risk_score": <integer 0-100, where 0=safe and 100=critical>,
+  "explanation": "<one concise paragraph explaining the risk level>",
+  "suggestions": ["<plain string suggestion 1>", "<plain string suggestion 2>", "<plain string suggestion 3>"]
+}}
+
+Each suggestion MUST be a plain string sentence — no nested objects, no arrays inside suggestions.
 
 ### PR Title:
 {title}
@@ -19,12 +23,5 @@ def assess_risk(title: str, description: str, diff: str) -> dict:
 {description or "(no description)"}
 
 ### Code Diff:
-{diff}
-
-Respond only with JSON:
-{{
-  "risk_score": 0-100,
-  "explanation": "...",
-  "suggestions": ["...", "..."]
-}}"""
+{diff}"""
     return call_llm(prompt, system_prompt=_SYSTEM)

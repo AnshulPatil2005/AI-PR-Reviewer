@@ -14,6 +14,9 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
+    monthly_quota = Column(Integer, default=10)
+    analyses_this_month = Column(Integer, default=0)
+    quota_reset_date = Column(DateTime, nullable=True, default=None)
 
     analyses = relationship("Analysis", back_populates="user", cascade="all, delete-orphan")
     analysis_jobs = relationship("AnalysisJob", back_populates="user", cascade="all, delete-orphan")

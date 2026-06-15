@@ -6,6 +6,7 @@ import RegisterPage from "./pages/RegisterPage";
 import HistoryPage from "./pages/HistoryPage";
 import AnalysisDetailPage from "./pages/AnalysisDetailPage";
 import JobStatusPage from "./pages/JobStatusPage";
+import RepoAnalyticsPage from "./pages/RepoAnalyticsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 export const router = createBrowserRouter([
@@ -37,6 +38,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <JobStatusPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "repos",
+        element: (
+          <ProtectedRoute>
+            <RepoAnalyticsPage />
           </ProtectedRoute>
         ),
       },
