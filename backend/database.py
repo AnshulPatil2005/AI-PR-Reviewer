@@ -20,7 +20,7 @@ def ensure_runtime_schema():
         additions = {
             "monthly_quota": "INTEGER DEFAULT 10",
             "analyses_this_month": "INTEGER DEFAULT 0",
-            "quota_reset_date": "DATETIME",
+            "quota_reset_date": "TIMESTAMP",
         }
         with engine.begin() as conn:
             for name, ddl in additions.items():
