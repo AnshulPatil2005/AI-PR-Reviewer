@@ -1,24 +1,22 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { useNavigate, Link, useOutletContext } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-type OutletCtx = { darkMode: boolean };
-
 export default function RegisterPage() {
-  const { darkMode } = useOutletContext<OutletCtx>();
   const { register, isLoading } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [error, setError] = useState("");
+  const [confirm, setConfirm]   = useState("");
+  const [error, setError]       = useState("");
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     if (password !== confirm) { setError("Passwords do not match."); return; }
-    if (password.length < 8) { setError("Password must be at least 8 characters."); return; }
+    if (password.length < 8)  { setError("Password must be at least 8 characters."); return; }
     try {
       await register(email, password);
       navigate("/");
@@ -26,55 +24,95 @@ export default function RegisterPage() {
       if (err?.response) {
         setError(err.response.data?.detail || `Server error ${err.response.status}`);
       } else if (err?.request) {
-        setError(`Cannot reach server — check VITE_API_BASE (currently: ${import.meta.env.VITE_API_BASE || "not set, using localhost:8000"})`);
+        setError(
+          `Cannot reach server — check VITE_API_BASE (currently: ${import.meta.env.VITE_API_BASE || "not set, using localhost:8000"})`
+        );
       } else {
         setError(err?.message || "Registration failed.");
       }
     }
   };
 
-  const inputCls = `w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition ${
-    darkMode
-      ? "bg-slate-800 border-slate-700 focus:ring-blue-400 text-slate-100"
-      : "bg-white border-slate-300 focus:ring-blue-500 text-slate-900"
-  }`;
+  const inputCls =
+    "w-full bg-bg border border-dashed border-border text-fog font-mono text-sm px-4 py-3 focus:outline-none focus:border-accent/50 transition-colors placeholder:text-fog-muted";
 
   return (
-    <div className="flex items-center justify-center px-4 py-16">
-      <div className={`w-full max-w-sm rounded-2xl shadow-xl p-8 border ${darkMode ? "bg-slate-900 border-slate-700" : "bg-white border-slate-200"}`}>
-        <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-6">Create Account</h1>
+    <div className="grid-bg min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
+      <div className="w-full max-w-sm border border-dashed border-border bg-surface p-8 space-y-6">
+        {/* Header */}
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent mb-2">
+            AI PR Copilot
+          </p>
+          <h1 className="text-2xl font-bold text-fog">Create account</h1>
+          <p className="text-fog-muted text-sm mt-1">
+            Already registered?{" "}
+            <Link to="/login" className="text-accent hover:underline underline-offset-2">
+              Sign in
+            </Link>
+          </p>
+        </div>
 
+        {/* Error */}
         {error && (
-          <div className="mb-4 p-3 rounded-lg text-sm text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800">
+          <div className="border border-dashed border-red-500/40 bg-red-500/10 p-3 text-sm text-red-400 font-mono">
             {error}
           </div>
         )}
 
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input type="email" className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <label className="block font-mono text-[10px] uppercase tracking-[0.16em] text-fog-muted mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              className={inputCls}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
+
           <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
-            <input type="password" className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <label className="block font-mono text-[10px] uppercase tracking-[0.16em] text-fog-muted mb-2">
+              Password
+            </label>
+            <input
+              type="password"
+              className={inputCls}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </div>
+
           <div>
-            <label className="block text-sm font-medium mb-1">Confirm Password</label>
-            <input type="password" className={inputCls} value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+            <label className="block font-mono text-[10px] uppercase tracking-[0.16em] text-fog-muted mb-2">
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              className={inputCls}
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              required
+            />
           </div>
+
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition disabled:opacity-60"
+            className="w-full clip-notch bg-accent text-bg font-mono text-[11px] uppercase tracking-[0.14em] font-bold py-3.5 hover:shadow-glow transition-shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {isLoading ? "Creating account..." : "Create Account"}
+            {isLoading ? "Creating account…" : (<>Create account <ArrowRight size={13} /></>)}
           </button>
         </form>
 
-        <p className={`mt-4 text-sm text-center ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-          Already have an account?{" "}
-          <Link to="/login" className="text-blue-500 hover:underline font-medium">Sign in</Link>
+        <p className="font-mono text-[10px] text-fog-muted text-center leading-relaxed">
+          By creating an account you agree to our terms of service.
+          10 free PR analyses per month, no card required.
         </p>
       </div>
     </div>
