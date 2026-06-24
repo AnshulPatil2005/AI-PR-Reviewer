@@ -16,7 +16,11 @@ client.interceptors.response.use(
   (res) => res,
   (err) => {
     const status = err.response?.status;
-    if (status === 401 || status === 403) {
+    const url: string = err.config?.url ?? "";
+    // Auth endpoints return 401 for wrong credentials — don't treat that as
+    // an expired session; let the page's own catch block show the error.
+    const isAuthEndpoint = url.includes("/auth/login") || url.includes("/auth/register");
+    if ((status === 401 || status === 403) && !isAuthEndpoint) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.href = "/login";
