@@ -143,6 +143,20 @@ class AnalyzePRRequest(BaseModel):
     pr_number: int
     review_mode: Literal["general", "security", "performance", "maintainability"] = "general"
 
+    @field_validator("repo_url")
+    @classmethod
+    def repo_url_must_be_https(cls, v: str) -> str:
+        if not v.startswith("https://"):
+            raise ValueError("repo_url must use the https:// scheme")
+        return v.strip()
+
+    @field_validator("pr_number")
+    @classmethod
+    def pr_number_must_be_positive(cls, v: int) -> int:
+        if v < 1:
+            raise ValueError("pr_number must be a positive integer")
+        return v
+
 
 class FindingOut(BaseModel):
     title: str
