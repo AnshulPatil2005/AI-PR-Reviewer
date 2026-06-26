@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight, GitPullRequest, GitBranch, Shield, Bug, Zap,
-  Brain, Code2, BarChart2, CheckCircle, Cpu, X, ExternalLink,
-  Network, TrendingUp, Briefcase, Users,
+  Brain, Code2, BarChart2, CheckCircle, Cpu, X,
 } from "lucide-react";
 import { analysisApi, type ReviewMode } from "../api/endpoints";
 import { describeApiError } from "../api/errors";
@@ -33,180 +32,6 @@ const FEATURES = [
   { icon: Code2,    title: "Multi-language",         tag: "Coverage",     desc: "Python, TypeScript, Go, Rust, Java, Ruby, C++ and more with per-language heuristics." },
   { icon: BarChart2,  title: "Risk analytics",       tag: "Analytics",    desc: "Track quality over time. Spot which files consistently introduce risk." },
 ] as const;
-
-// ─── Projects ────────────────────────────────────────────────────
-
-const OTHER_PROJECTS = [
-  {
-    icon: Network,
-    name: "Faulty Node Detection",
-    href: "https://github.com/AnshulPatil2005/faulty_node_detection",
-    tags: ["Python", "NS-3", "C++", "Claude API"],
-    desc: "Four-stage pipeline that simulates a 12-node star-topology network via NS-3, detects faulty nodes using Z-score, IQR, and composite anomaly scoring, then explains results through a Claude-powered diagnostic agent embedded in a standalone HTML dashboard.",
-  },
-  {
-    icon: Brain,
-    name: "Smartfolio",
-    href: "https://github.com/AnshulPatil2005/Smartfolio",
-    tags: ["FastAPI", "React", "Gemini AI", "PostgreSQL"],
-    desc: "AI-powered portfolio generator that aggregates LinkedIn, GitHub, Codeforces, and LeetCode data via Gemini to produce polished professional portfolios — with private coaching insights, AI refinement workflows, and full version history.",
-  },
-  {
-    icon: Users,
-    name: "LinkedIn Connector",
-    href: "https://github.com/AnshulPatil2005/linkedin-connector",
-    tags: ["Python", "Automation", "LinkedIn API"],
-    desc: "Automated LinkedIn connection manager — handles bulk connection requests, tracks pending invites, and filters outreach by industry or role to scale professional networking without manual effort.",
-  },
-  {
-    icon: Briefcase,
-    name: "Smart Signal Traffic System",
-    href: "https://github.com/AnshulPatil2005/internship-project-",
-    tags: ["Django", "Python", "AWS S3", "Maps"],
-    desc: "Internship project: Django web app for broadcasting safety messages and ads at traffic signals. Multi-role access (Admin/Client), video uploads to AWS S3, map-based signal visualization, and CCTV integration support.",
-  },
-  {
-    icon: TrendingUp,
-    name: "Stock Dashboard",
-    href: "https://github.com/AnshulPatil2005/stock_dashboard-",
-    tags: ["FastAPI", "React", "Chart.js", "AI"],
-    desc: "Dark responsive stock dashboard with FastAPI + CSV data backend. Features SMA/EMA, Bollinger Bands, 52-week range, multi-timeframe views, a floating AI chatbot for Q&A, and a news summarizer with sentiment analysis.",
-  },
-] as const;
-
-function ProjectsSection() {
-  return (
-    <section className="py-24 border-b border-dashed border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="max-w-xl mb-16">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent mb-3">Projects</p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-fog">
-            What I've built
-          </h2>
-          <p className="mt-3 text-fog-muted text-sm leading-relaxed max-w-md">
-            A mix of AI tooling, systems work, and full-stack apps — ranging from production-deployed products to deep technical explorations.
-          </p>
-        </div>
-
-        {/* ── Flagship card ── */}
-        <div className="relative mb-6 group">
-          {/* Glow layer */}
-          <div
-            className="absolute -inset-px pointer-events-none"
-            style={{ background: "linear-gradient(135deg, rgba(0,230,118,0.18) 0%, transparent 60%)", borderRadius: 0 }}
-          />
-          <div className="relative border border-accent/40 bg-surface p-8 sm:p-10 grid grid-cols-1 lg:grid-cols-[1fr,auto] gap-8 items-start">
-            {/* Badge */}
-            <div className="absolute top-5 right-5 hidden sm:flex items-center gap-1.5 border border-dashed border-accent/50 bg-accent/10 px-2.5 py-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-accent">Flagship</span>
-            </div>
-
-            {/* Left */}
-            <div className="space-y-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 border border-dashed border-accent/40 flex items-center justify-center group-hover:border-accent/70 transition-colors">
-                  <GitPullRequest size={16} className="text-accent" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-fog">AI PR Copilot</h3>
-                  <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-fog-muted mt-0.5">Production · Full-stack</p>
-                </div>
-              </div>
-
-              <p className="text-fog-dim text-sm sm:text-[15px] leading-relaxed max-w-2xl">
-                Async AI-powered pull request reviewer with a FastAPI agentic pipeline that parses diffs, runs heuristic checks, and chains LLM calls on critical files across four review modes — security, performance, maintainability, and general. Structured findings with severity levels, per-user quota enforcement, repo analytics, and a dark terminal React frontend.
-              </p>
-
-              {/* Tech tags */}
-              <div className="flex flex-wrap gap-1.5">
-                {["FastAPI", "React 19", "Vite", "Supabase", "OpenRouter", "SQLAlchemy", "Tailwind v4"].map(t => (
-                  <span key={t} className="font-mono text-[9px] uppercase tracking-widest border border-dashed border-accent/30 bg-accent/5 text-accent px-2 py-0.5">
-                    {t}
-                  </span>
-                ))}
-              </div>
-
-              {/* Links */}
-              <div className="flex flex-wrap gap-3 pt-1">
-                <a
-                  href="https://github.com/AnshulPatil2005/AI-PR-Reviewer"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="clip-notch-sm inline-flex items-center gap-2 border border-dashed border-accent/40 text-fog-dim font-mono text-[10px] uppercase tracking-[0.14em] px-4 py-2 hover:border-accent/70 hover:text-fog transition-all"
-                >
-                  <Code2 size={11} /> Source
-                </a>
-                <Link
-                  to="/register"
-                  className="clip-notch-sm inline-flex items-center gap-2 bg-accent text-bg font-mono text-[10px] uppercase tracking-[0.14em] font-bold px-4 py-2 hover:shadow-glow-sm transition-shadow"
-                >
-                  <ExternalLink size={11} /> Try it live
-                </Link>
-              </div>
-            </div>
-
-            {/* Right: stat pills */}
-            <div className="flex flex-row lg:flex-col gap-3 lg:min-w-[140px]">
-              {[
-                { label: "53", sub: "tests passing" },
-                { label: "4",  sub: "review modes" },
-                { label: "10", sub: "free analyses/mo" },
-              ].map((s) => (
-                <div key={s.sub} className="border border-dashed border-border bg-bg p-3 text-center min-w-[90px]">
-                  <div className="font-mono text-2xl font-bold text-accent text-glow">{s.label}</div>
-                  <div className="font-mono text-[8px] uppercase tracking-widest text-fog-muted mt-1 leading-tight">{s.sub}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Other projects grid ── */}
-        <div className="mb-3">
-          <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-fog-muted">Other projects</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0">
-          {OTHER_PROJECTS.map((p) => {
-            const Icon = p.icon;
-            return (
-              <a
-                key={p.name}
-                href={p.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block p-5 border border-dashed border-border hover:border-fog-muted/40 hover:bg-surface/40 transition-all group"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="w-8 h-8 flex items-center justify-center border border-dashed border-border group-hover:border-fog-muted/50 transition-colors">
-                    <Icon size={14} className="text-fog-muted group-hover:text-fog transition-colors" />
-                  </div>
-                  <ExternalLink size={11} className="text-fog-muted/40 group-hover:text-fog-muted transition-colors mt-1" />
-                </div>
-
-                <h3 className="font-semibold text-fog-dim text-[14px] mb-1.5 group-hover:text-fog transition-colors">
-                  {p.name}
-                </h3>
-                <p className="text-fog-muted text-xs leading-relaxed mb-3 line-clamp-3">
-                  {p.desc}
-                </p>
-
-                <div className="flex flex-wrap gap-1">
-                  {p.tags.map(t => (
-                    <span key={t} className="font-mono text-[8px] uppercase tracking-widest border border-dashed border-border text-fog-muted px-1.5 py-0.5">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </a>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 function AnnouncementBanner() {
   const [visible, setVisible] = useState(true);
@@ -366,9 +191,6 @@ function LandingView() {
           </div>
         </div>
       </section>
-
-      {/* ── Projects ── */}
-      <ProjectsSection />
 
       {/* ── CTA banner ── */}
       <section className="py-24 relative overflow-hidden">
