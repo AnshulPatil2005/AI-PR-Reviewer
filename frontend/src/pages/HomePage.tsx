@@ -13,34 +13,34 @@ import PRMockup from "../components/landing/PRMockup";
 
 const STATS = [
   { value: "2.4k+", label: "PRs reviewed" },
-  { value: "47%",   label: "Faster review" },
-  { value: "99.2%", label: "Uptime SLA" },
+  { value: "47%",   label: "Faster review cycle" },
+  { value: "99.2%", label: "Uptime" },
 ];
 
 const HOW_STEPS = [
-  { icon: GitBranch,   step: "01", title: "Connect your repo",    desc: "Authorize on GitHub, GitLab, or Bitbucket in one click. No webhook config." },
-  { icon: GitPullRequest, step: "02", title: "Open a pull request", desc: "Work exactly as you do today. Copilot picks up every PR automatically." },
-  { icon: Cpu,         step: "03", title: "AI reviews in seconds", desc: "Parse diffs, run heuristic checks, then LLM review on critical files — not the whole codebase." },
-  { icon: CheckCircle, step: "04", title: "Merge with confidence", desc: "Structured feedback with severity levels and actionable suggestions right in your PR." },
+  { icon: GitBranch,      num: "1", title: "Connect your repo",     desc: "Authorize on GitHub in one click. No webhook config, no YAML files." },
+  { icon: GitPullRequest, num: "2", title: "Open a pull request",   desc: "Work exactly as you do today. The copilot picks up every PR automatically." },
+  { icon: Cpu,            num: "3", title: "AI reviews in seconds", desc: "Diff parsing, heuristic checks, then LLM review on the critical files." },
+  { icon: CheckCircle,    num: "4", title: "Merge with confidence", desc: "Severity-ranked findings and actionable suggestions, directly in the PR." },
 ];
 
 const FEATURES = [
-  { icon: Shield,   title: "Security scanning",     tag: "Security",     desc: "Detects injection vectors, exposed secrets, insecure deps, and auth bypass patterns." },
-  { icon: Bug,      title: "Logic analysis",         tag: "Correctness",  desc: "Catches null dereferences, off-by-ones, missing error branches, and async races." },
-  { icon: Zap,      title: "Performance profiling",  tag: "Performance",  desc: "Flags N+1 queries, unnecessary re-renders, unbounded loops, and memory leaks." },
-  { icon: Brain,    title: "Codebase context",       tag: "Intelligence", desc: "Analyzes changes in context of the surrounding file — reducing false positives by 60%." },
-  { icon: Code2,    title: "Multi-language",         tag: "Coverage",     desc: "Python, TypeScript, Go, Rust, Java, Ruby, C++ and more with per-language heuristics." },
-  { icon: BarChart2,  title: "Risk analytics",       tag: "Analytics",    desc: "Track quality over time. Spot which files consistently introduce risk." },
+  { icon: Shield,    title: "Security scanning",    tag: "Security",     desc: "Injection vectors, exposed secrets, insecure deps, and auth bypass patterns." },
+  { icon: Bug,       title: "Logic analysis",        tag: "Correctness",  desc: "Null dereferences, off-by-ones, missing error branches, and async races." },
+  { icon: Zap,       title: "Performance profiling", tag: "Performance",  desc: "N+1 queries, unnecessary re-renders, unbounded loops, and memory leaks." },
+  { icon: Brain,     title: "Codebase context",      tag: "Intelligence", desc: "Analyzes changes against the surrounding file — reducing false positives by 60%." },
+  { icon: Code2,     title: "Multi-language",        tag: "Coverage",     desc: "Python, TypeScript, Go, Rust, Java, Ruby, C++ with per-language heuristics." },
+  { icon: BarChart2, title: "Risk analytics",        tag: "Analytics",    desc: "Track quality over time. Surface which files consistently introduce risk." },
 ] as const;
 
 function AnnouncementBanner() {
   const [visible, setVisible] = useState(true);
   if (!visible) return null;
   return (
-    <div className="relative bg-accent/8 border-b border-dashed border-accent/20 py-2 px-6">
+    <div className="relative bg-accent/6 border-b border-dashed border-accent/15 py-2 px-6">
       <div className="max-w-7xl mx-auto flex items-center justify-center gap-2.5">
         <Zap size={11} className="text-accent shrink-0" />
-        <p className="font-mono text-[11px] uppercase tracking-widest text-fog-dim">
+        <p className="font-mono text-[11px] uppercase tracking-widest text-fog-muted">
           Multi-file context analysis is now live —
         </p>
         <Link to="/register" className="font-mono text-[11px] uppercase tracking-widest text-accent hover:underline underline-offset-2 shrink-0">
@@ -65,31 +65,36 @@ function LandingView() {
 
       {/* ── Hero ── */}
       <section className="relative grid-bg overflow-hidden">
+        {/* Warm ambient glow — top left */}
         <div
           className="absolute pointer-events-none"
-          style={{ top: "15%", left: "3%", width: 480, height: 480,
-            background: "radial-gradient(circle, rgba(0,230,118,0.06) 0%, transparent 70%)" }}
+          style={{
+            top: "-5%", left: "-5%", width: 600, height: 600,
+            background: "radial-gradient(circle, rgba(224,148,0,0.055) 0%, transparent 65%)",
+          }}
         />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+
             {/* Left */}
-            <div className="space-y-7 animate-fade-up">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 border border-dashed border-accent/30 bg-accent/5">
-                <GitPullRequest size={11} className="text-accent" />
+            <div className="space-y-8 animate-fade-up">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 border border-dashed border-accent/25 bg-accent/5">
+                <GitPullRequest size={10} className="text-accent" />
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-accent">
-                  Free forever for open source projects
+                  Free for open source
                 </span>
               </div>
 
-              <h1 className="text-[2.6rem] sm:text-[3.25rem] lg:text-[3.5rem] leading-[1.08] font-bold text-fog tracking-tight">
-                Ship code you can{" "}
-                <span className="text-accent text-glow">stand behind</span>
-              </h1>
-
-              <p className="text-base sm:text-lg text-fog-dim leading-relaxed max-w-xl">
-                AI PR Copilot reviews every pull request in seconds — catching security
-                vulnerabilities, logic bugs, and performance issues before they reach users.
-              </p>
+              <div>
+                <h1 className="font-display text-[2.8rem] sm:text-[3.4rem] lg:text-[3.6rem] leading-[1.04] font-bold text-fog tracking-tight">
+                  Ship code you can{" "}
+                  <span className="text-accent text-glow">stand behind.</span>
+                </h1>
+                <p className="mt-5 text-base sm:text-lg text-fog-dim leading-relaxed max-w-lg">
+                  AI PR Copilot reviews every pull request in seconds — catching security
+                  vulnerabilities, logic bugs, and performance issues before they reach users.
+                </p>
+              </div>
 
               <div className="flex flex-wrap gap-3">
                 <Link
@@ -100,17 +105,18 @@ function LandingView() {
                 </Link>
                 <a
                   href="#how-it-works"
-                  className="clip-notch inline-flex items-center gap-2 border border-dashed border-accent/30 text-fog-dim font-mono text-[11px] uppercase tracking-[0.14em] px-6 py-3 hover:border-accent/50 hover:text-fog transition-all"
+                  className="clip-notch inline-flex items-center gap-2 border border-dashed border-border text-fog-dim font-mono text-[11px] uppercase tracking-[0.14em] px-6 py-3 hover:border-accent/40 hover:text-fog transition-all"
                 >
                   See how it works
                 </a>
               </div>
 
-              <div className="flex gap-8 pt-2">
+              {/* Stats */}
+              <div className="flex gap-10 pt-1 border-t border-dashed border-border">
                 {STATS.map((s) => (
-                  <div key={s.label}>
-                    <div className="font-mono text-2xl font-bold text-accent text-glow">{s.value}</div>
-                    <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-fog-muted mt-1">{s.label}</div>
+                  <div key={s.label} className="pt-5">
+                    <div className="font-display text-3xl font-bold text-accent text-glow">{s.value}</div>
+                    <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-fog-muted mt-1">{s.label}</div>
                   </div>
                 ))}
               </div>
@@ -129,7 +135,7 @@ function LandingView() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-xl mb-16">
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent mb-3">How it works</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-fog">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-fog tracking-tight">
               From push to review in under 30 seconds
             </h2>
           </div>
@@ -138,19 +144,23 @@ function LandingView() {
               const Icon = step.icon;
               return (
                 <div
-                  key={step.step}
-                  className="p-6 border border-dashed border-border hover:border-accent/30 transition-colors group"
+                  key={step.num}
+                  className="p-6 border border-dashed border-border hover:border-accent/30 transition-colors group relative overflow-hidden"
                 >
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className="w-8 h-8 flex items-center justify-center border border-dashed border-accent/30 group-hover:border-accent/60 transition-colors">
+                  {/* Large decorative number — not a label, just texture */}
+                  <span
+                    className="absolute -top-1 right-3 font-display text-[5.5rem] font-bold leading-none select-none pointer-events-none"
+                    style={{ color: "rgb(224 148 0 / 0.07)" }}
+                  >
+                    {step.num}
+                  </span>
+                  <div className="relative">
+                    <div className="w-8 h-8 flex items-center justify-center border border-dashed border-accent/25 group-hover:border-accent/60 transition-colors mb-5">
                       <Icon size={14} className="text-accent" />
                     </div>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-fog-muted">
-                      Step {step.step}
-                    </span>
+                    <h3 className="font-display font-semibold text-fog text-base mb-2">{step.title}</h3>
+                    <p className="text-fog-muted text-sm leading-relaxed">{step.desc}</p>
                   </div>
-                  <h3 className="font-semibold text-fog text-[15px] mb-2">{step.title}</h3>
-                  <p className="text-fog-muted text-sm leading-relaxed">{step.desc}</p>
                 </div>
               );
             })}
@@ -163,8 +173,8 @@ function LandingView() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-xl mb-16">
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent mb-3">Features</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-fog">
-              Everything your team needs to review confidently
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-fog tracking-tight">
+              Everything your team needs to review with confidence
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0">
@@ -173,7 +183,7 @@ function LandingView() {
               return (
                 <div
                   key={f.title}
-                  className="p-6 border border-dashed border-border hover:border-accent/25 hover:bg-surface/50 transition-all group cursor-default"
+                  className="p-6 border border-dashed border-border hover:border-accent/25 hover:bg-surface/60 transition-all group cursor-default"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-9 h-9 flex items-center justify-center border border-dashed border-border group-hover:border-accent/40 transition-colors">
@@ -183,7 +193,7 @@ function LandingView() {
                       {f.tag}
                     </span>
                   </div>
-                  <h3 className="font-semibold text-fog text-[15px] mb-2">{f.title}</h3>
+                  <h3 className="font-display font-semibold text-fog text-[15px] mb-2">{f.title}</h3>
                   <p className="text-fog-muted text-sm leading-relaxed">{f.desc}</p>
                 </div>
               );
@@ -192,14 +202,14 @@ function LandingView() {
         </div>
       </section>
 
-      {/* ── CTA banner ── */}
+      {/* ── CTA ── */}
       <section className="py-24 relative overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(0,230,118,0.06) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(224,148,0,0.06) 0%, transparent 70%)" }}
         />
         <div className="relative max-w-2xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-3xl sm:text-[2.75rem] font-bold text-fog leading-tight mb-5">
+          <h2 className="font-display text-3xl sm:text-[2.75rem] font-bold text-fog leading-tight mb-5 tracking-tight">
             Ready to review with confidence?
           </h2>
           <p className="text-fog-dim text-base sm:text-lg leading-relaxed mb-10 max-w-xl mx-auto">
@@ -214,7 +224,7 @@ function LandingView() {
             </Link>
             <Link
               to="/login"
-              className="clip-notch inline-flex items-center gap-2 border border-dashed border-accent/30 text-fog-dim font-mono text-[11px] uppercase tracking-[0.14em] px-7 py-3.5 hover:border-accent/50 hover:text-fog transition-all w-full sm:w-auto justify-center"
+              className="clip-notch inline-flex items-center gap-2 border border-dashed border-border text-fog-dim font-mono text-[11px] uppercase tracking-[0.14em] px-7 py-3.5 hover:border-accent/40 hover:text-fog transition-all w-full sm:w-auto justify-center"
             >
               Already have an account
             </Link>
@@ -232,7 +242,7 @@ function LandingView() {
 
 const REVIEW_MODES: Array<{ id: ReviewMode; label: string; desc: string }> = [
   { id: "general",         label: "General",         desc: "Balanced correctness, maintainability, and change-risk review." },
-  { id: "security",        label: "Security",         desc: "Focused on auth, permissions, secrets, and unsafe execution." },
+  { id: "security",        label: "Security",         desc: "Auth, permissions, secrets, and unsafe execution patterns." },
   { id: "performance",     label: "Performance",      desc: "Expensive paths, scaling risks, and perf regressions." },
   { id: "maintainability", label: "Maintainability",  desc: "Clarity, cohesion, and testability of the diff." },
 ];
@@ -262,7 +272,6 @@ function AnalyzeView() {
     setError("");
     const trimmedUrl = repoUrl.trim();
     const pr = Number(prNumber);
-
     if (!isGitHubRepoUrl(trimmedUrl)) {
       setError("Invalid repo URL. Use https://github.com/<owner>/<repo>.");
       return;
@@ -291,22 +300,21 @@ function AnalyzeView() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr,420px] gap-12 lg:gap-16 items-start">
 
-          {/* Left: copy + recent links */}
+          {/* Left */}
           <div className="space-y-6">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent mb-3">
                 Welcome back
               </p>
-              <h1 className="text-3xl sm:text-4xl font-bold text-fog tracking-tight">
+              <h1 className="font-display text-3xl sm:text-4xl font-bold text-fog tracking-tight">
                 Start a PR review
               </h1>
               <p className="mt-3 text-fog-muted text-base leading-relaxed max-w-lg">
-                Paste a GitHub repo URL and PR number. The agentic pipeline parses the diff,
-                runs heuristic checks, and calls an LLM review chain on critical files.
+                Paste a GitHub repo URL and PR number. The pipeline parses the diff,
+                runs heuristic checks, and calls the LLM review chain on critical files.
               </p>
             </div>
 
-            {/* Quick-action cards */}
             <div className="grid gap-3 sm:grid-cols-3">
               {[
                 "Typed findings: bug risk, security, performance, breaking changes",
@@ -340,7 +348,6 @@ function AnalyzeView() {
 
           {/* Right: form */}
           <div className="border border-dashed border-border bg-surface p-6 space-y-5">
-            {/* Repo URL */}
             <div>
               <label className="block font-mono text-[10px] uppercase tracking-[0.16em] text-fog-muted mb-2">
                 GitHub Repository URL
@@ -354,7 +361,6 @@ function AnalyzeView() {
               />
             </div>
 
-            {/* PR number */}
             <div>
               <label className="block font-mono text-[10px] uppercase tracking-[0.16em] text-fog-muted mb-2">
                 Pull Request Number
@@ -368,7 +374,6 @@ function AnalyzeView() {
               />
             </div>
 
-            {/* Review mode */}
             <div>
               <label className="block font-mono text-[10px] uppercase tracking-[0.16em] text-fog-muted mb-3">
                 Review Mode
@@ -394,14 +399,12 @@ function AnalyzeView() {
               </div>
             </div>
 
-            {/* Error */}
             {error && (
               <div className="border border-dashed border-red-500/40 bg-red-500/10 p-3 text-sm text-red-400 font-mono">
                 {error}
               </div>
             )}
 
-            {/* Quota limit */}
             {atLimit && (
               <div className="border border-dashed border-red-500/40 bg-red-500/10 p-3 text-sm text-red-400 font-mono text-center">
                 Monthly limit reached ({user!.monthly_quota} analyses).
@@ -409,7 +412,6 @@ function AnalyzeView() {
               </div>
             )}
 
-            {/* Submit */}
             <button
               onClick={handleAnalyze}
               disabled={loading || atLimit}

@@ -20,12 +20,12 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-1 group">
-              <span className="font-mono font-bold text-[16px] text-fog group-hover:text-accent transition-colors">
+            <Link to="/" className="flex items-center gap-1.5 group">
+              <span className="font-display font-bold text-[17px] text-fog-dim group-hover:text-fog transition-colors tracking-tight">
                 AI PR
               </span>
-              <span className="font-mono font-bold text-[16px] text-accent text-glow">
-                &nbsp;Copilot
+              <span className="font-display font-bold text-[17px] text-accent text-glow tracking-tight">
+                Copilot
               </span>
             </Link>
 
