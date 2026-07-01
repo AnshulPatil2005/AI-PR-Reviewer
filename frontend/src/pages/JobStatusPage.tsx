@@ -1,28 +1,27 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { analysisApi, type JobData } from "../api/endpoints";
 import { describeApiError } from "../api/errors";
 
-type OutletCtx = { darkMode: boolean };
+const STAGES = ["queued", "fetching_pr", "analyzing_diff", "saving_report"] as const;
 
-const stageLabels: Record<string, string> = {
-  queued: "Queued",
-  fetching_pr: "Fetching PR",
+const STAGE_LABELS: Record<string, string> = {
+  queued:         "Queued",
+  fetching_pr:    "Fetching PR",
   analyzing_diff: "Analyzing Diff",
-  saving_report: "Saving Report",
-  completed: "Completed",
-  failed: "Failed",
+  saving_report:  "Saving Report",
+  completed:      "Completed",
+  failed:         "Failed",
 };
 
-const stageThresholds: Record<string, number> = {
-  queued: 0,
-  fetching_pr: 0.1,
+const STAGE_THRESHOLDS: Record<string, number> = {
+  queued:         0,
+  fetching_pr:    0.1,
   analyzing_diff: 0.45,
-  saving_report: 0.8,
+  saving_report:  0.8,
 };
 
 export default function JobStatusPage() {
-  const { darkMode } = useOutletContext<OutletCtx>();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [job, setJob] = useState<JobData | null>(null);
@@ -47,74 +46,76 @@ export default function JobStatusPage() {
         }
         window.setTimeout(poll, 1800);
       } catch (err: any) {
-        if (!isCancelled) {
-          setError(describeApiError(err, "Could not load job status."));
-        }
+        if (!isCancelled) setError(describeApiError(err, "Could not load job status."));
       }
     };
 
     poll();
-    return () => {
-      isCancelled = true;
-    };
+    return () => { isCancelled = true; };
   }, [id, navigate]);
 
+  const progress = job?.progress ?? 0;
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-14">
-      <div className={`rounded-[2rem] border p-8 ${darkMode ? "border-slate-700 bg-slate-950/90" : "border-slate-200 bg-white"}`}>
-        <p className="text-sm uppercase tracking-[0.28em] text-cyan-500">Review Job</p>
-        <h1 className="mt-3 text-3xl font-bold">Running staged PR analysis</h1>
+    <div className="grid-bg min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
+      <div className="w-full max-w-xl border border-dashed border-border bg-surface p-8 space-y-6">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent mb-2">Review Job</p>
+          <h1 className="text-2xl font-bold text-fog">Running staged PR analysis</h1>
+          {job && (
+            <p className="font-mono text-[11px] text-fog-muted mt-2">
+              {job.repo_url.replace("https://github.com/", "")} · PR #{job.pr_number}
+            </p>
+          )}
+        </div>
 
         {error ? (
-          <div className={`mt-6 rounded-2xl border p-4 text-sm ${darkMode ? "border-rose-800 bg-rose-900/30 text-rose-300" : "border-rose-200 bg-rose-50 text-rose-700"}`}>
+          <div className="border border-dashed border-red-500/40 bg-red-500/10 p-4 text-sm text-red-400 font-mono">
             {error}
           </div>
         ) : (
           <>
-            <p className={`mt-4 text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-              {job ? `${job.repo_url} • PR #${job.pr_number}` : "Loading job details..."}
-            </p>
-            <div className={`mt-8 h-3 overflow-hidden rounded-full ${darkMode ? "bg-slate-800" : "bg-slate-100"}`}>
-              <div
-                className="h-full rounded-full bg-cyan-500 transition-all duration-500"
-                style={{ width: `${Math.max(6, (job?.progress || 0) * 100)}%` }}
-              />
+            {/* Progress bar */}
+            <div>
+              <div className="flex justify-between font-mono text-[9px] uppercase tracking-widest text-fog-muted mb-2">
+                <span>{STAGE_LABELS[job?.stage ?? "queued"]}</span>
+                <span>{Math.round(progress * 100)}%</span>
+              </div>
+              <div className="h-1 bg-border w-full">
+                <div
+                  className="h-full bg-accent transition-all duration-500"
+                  style={{ width: `${Math.max(4, progress * 100)}%` }}
+                />
+              </div>
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-4">
-              {["queued", "fetching_pr", "analyzing_diff", "saving_report"].map((stage) => {
+            {/* Stage indicators */}
+            <div className="grid grid-cols-4 gap-2">
+              {STAGES.map((stage) => {
                 const active = job?.stage === stage;
-                const done = (job?.progress || 0) >= stageThresholds[stage];
+                const done = progress >= (STAGE_THRESHOLDS[stage] ?? 0);
                 return (
                   <div
                     key={stage}
-                    className={`rounded-2xl border px-4 py-3 text-sm ${
+                    className={`border border-dashed px-2 py-2 text-center transition-colors ${
                       active
-                        ? "border-cyan-500 bg-cyan-500/10"
+                        ? "border-accent/60 bg-accent/5"
                         : done
-                          ? darkMode
-                            ? "border-slate-700 bg-slate-900 text-slate-300"
-                            : "border-slate-200 bg-slate-50 text-slate-700"
-                          : darkMode
-                            ? "border-slate-800 bg-slate-950 text-slate-500"
-                            : "border-slate-200 bg-white text-slate-400"
+                        ? "border-border bg-surface-2"
+                        : "border-border opacity-40"
                     }`}
                   >
-                    {stageLabels[stage]}
+                    <p className={`font-mono text-[9px] uppercase tracking-[0.14em] ${active ? "text-accent" : "text-fog-muted"}`}>
+                      {STAGE_LABELS[stage]}
+                    </p>
                   </div>
                 );
               })}
             </div>
 
-            <div className={`mt-8 rounded-2xl border p-5 ${darkMode ? "border-slate-700 bg-slate-900/80" : "border-slate-200 bg-slate-50"}`}>
-              <p className="text-sm font-semibold">Current stage</p>
-              <p className={`mt-2 text-lg ${darkMode ? "text-slate-200" : "text-slate-800"}`}>
-                {stageLabels[job?.stage || "queued"] || job?.stage || "Queued"}
-              </p>
-              <p className={`mt-2 text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-                The report page will open automatically once the job completes.
-              </p>
-            </div>
+            <p className="font-mono text-[9px] text-fog-muted text-center">
+              Report page opens automatically when the job completes
+            </p>
           </>
         )}
       </div>

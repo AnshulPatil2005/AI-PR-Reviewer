@@ -2,3 +2,8 @@ fastapi==0.111.0
 uvicorn==0.30.0
 python-dotenv==1.0.1
 PyGithub==2.3.0
+SQLAlchemy==2.0.46
+passlib==1.7.4
+bcrypt==4.3.0
+python-jose[cryptography]==3.5.0
+pydantic==2.13.0

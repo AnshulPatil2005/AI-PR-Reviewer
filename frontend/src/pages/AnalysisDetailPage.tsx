@@ -1,13 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { analysisApi, type AnalysisData, type ComparisonData } from "../api/endpoints";
 import { describeApiError } from "../api/errors";
 import AnalysisSummary from "../components/AnalysisSummary";
 
-type OutletCtx = { darkMode: boolean };
-
 export default function AnalysisDetailPage() {
-  const { darkMode } = useOutletContext<OutletCtx>();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
@@ -48,80 +45,83 @@ export default function AnalysisDetailPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-10">
-        <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-500"}`}>Loading...</p>
+      <div className="max-w-5xl mx-auto px-4 py-12">
+        <p className="font-mono text-sm text-fog-muted">Loading…</p>
       </div>
     );
   }
 
   if (error || !analysis) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-10">
-        <p className="text-sm text-rose-500">{error || "Analysis not found."}</p>
-        <button onClick={() => navigate("/history")} className="mt-4 text-sm text-cyan-500 hover:underline">
-          Back to History
+      <div className="max-w-5xl mx-auto px-4 py-12 space-y-4">
+        <p className="font-mono text-sm text-red-400">{error || "Analysis not found."}</p>
+        <button
+          onClick={() => navigate("/history")}
+          className="font-mono text-[10px] uppercase tracking-widest text-fog-muted hover:text-fog transition-colors border-b border-dashed border-fog-muted/30 hover:border-accent/40 pb-0.5"
+        >
+          ← Back to History
         </button>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-6">
+      {/* Back */}
       <button
         onClick={() => navigate("/history")}
-        className={`mb-4 text-sm hover:underline ${darkMode ? "text-slate-400" : "text-slate-500"}`}
+        className="font-mono text-[10px] uppercase tracking-widest text-fog-muted hover:text-fog transition-colors border-b border-dashed border-fog-muted/30 hover:border-accent/40 pb-0.5"
       >
-        Back to History
+        ← History
       </button>
 
-      <div className={`rounded-[2rem] border p-6 ${darkMode ? "border-slate-700 bg-slate-950/90" : "border-slate-200 bg-white"}`}>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-sm uppercase tracking-[0.24em] text-cyan-500">Review Report</p>
-            <h1 className="mt-2 text-2xl font-bold">
-              PR #{analysis.pr_number} {analysis.pr_title ? `• ${analysis.pr_title}` : ""}
-            </h1>
-            <p className={`mt-2 text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-              {analysis.repo_url.replace("https://github.com/", "")} • {new Date(analysis.created_at).toLocaleString()}
-            </p>
-          </div>
-        </div>
+      {/* Header card */}
+      <div className="border border-dashed border-border bg-surface p-6">
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent mb-2">Review Report</p>
+        <h1 className="text-2xl font-bold text-fog">
+          PR #{analysis.pr_number}{analysis.pr_title ? ` · ${analysis.pr_title}` : ""}
+        </h1>
+        <p className="font-mono text-[11px] text-fog-muted mt-2">
+          {analysis.repo_url.replace("https://github.com/", "")} · {new Date(analysis.created_at).toLocaleString()}
+        </p>
+      </div>
 
-        {comparison && comparison.baseline_analysis_id && (
-          <div className={`mt-6 rounded-3xl border p-5 ${darkMode ? "border-slate-700 bg-slate-900/80" : "border-slate-200 bg-slate-50"}`}>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold">Rerun comparison</p>
-                <p className={`mt-2 text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-                  Compared with analysis #{comparison.baseline_analysis_id}. Risk delta: {comparison.risk_delta >= 0 ? "+" : ""}
-                  {comparison.risk_delta}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className={`rounded-full px-3 py-1 ${darkMode ? "bg-slate-800 text-slate-300" : "bg-white text-slate-700"}`}>
-                  Added findings: {comparison.findings_added.length}
+      {/* Comparison delta */}
+      {comparison?.baseline_analysis_id && (
+        <div className="border border-dashed border-border bg-surface p-5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-fog-muted mb-3">Rerun Comparison</p>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <p className="text-fog-dim text-sm">
+              vs. analysis #{comparison.baseline_analysis_id} · risk delta:{" "}
+              <span className={comparison.risk_delta >= 0 ? "text-red-400" : "text-accent"}>
+                {comparison.risk_delta >= 0 ? "+" : ""}{comparison.risk_delta}
+              </span>
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: "Added", count: comparison.findings_added.length },
+                { label: "Resolved", count: comparison.findings_resolved.length },
+                { label: "New risky files", count: comparison.newly_risky_files.length },
+              ].map(({ label, count }) => (
+                <span
+                  key={label}
+                  className="font-mono text-[9px] uppercase tracking-widest text-fog-muted border border-dashed border-border px-2 py-0.5"
+                >
+                  {label}: {count}
                 </span>
-                <span className={`rounded-full px-3 py-1 ${darkMode ? "bg-slate-800 text-slate-300" : "bg-white text-slate-700"}`}>
-                  Resolved: {comparison.findings_resolved.length}
-                </span>
-                <span className={`rounded-full px-3 py-1 ${darkMode ? "bg-slate-800 text-slate-300" : "bg-white text-slate-700"}`}>
-                  New risky files: {comparison.newly_risky_files.length}
-                </span>
-              </div>
+              ))}
             </div>
           </div>
-        )}
-
-        <div className="mt-6">
-          <AnalysisSummary
-            analysis={analysis}
-            darkMode={darkMode}
-            analysisId={analysis.id}
-            onRerun={handleRerun}
-            rerunning={rerunning}
-          />
         </div>
-      </div>
+      )}
+
+      {/* Full analysis */}
+      <AnalysisSummary
+        analysis={analysis}
+        analysisId={analysis.id}
+        onRerun={handleRerun}
+        rerunning={rerunning}
+      />
     </div>
   );
 }

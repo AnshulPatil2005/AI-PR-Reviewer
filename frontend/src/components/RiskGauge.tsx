@@ -3,9 +3,9 @@ interface RiskGaugeProps {
 }
 
 function riskColor(score: number): string {
-  if (score <= 33) return "#22c55e"; // green
-  if (score <= 66) return "#f59e0b"; // amber
-  return "#ef4444"; // red
+  if (score <= 33) return "#00e676";
+  if (score <= 66) return "#eab308";
+  return "#ef4444";
 }
 
 function riskLabel(score: number): string {
@@ -19,42 +19,39 @@ export default function RiskGauge({ score }: RiskGaugeProps) {
   const color = riskColor(clampedScore);
   const label = riskLabel(clampedScore);
 
-  // SVG arc parameters
   const r = 54;
   const cx = 70;
   const cy = 70;
-  const circumference = Math.PI * r; // half circle
+  const circumference = Math.PI * r;
   const dash = (clampedScore / 100) * circumference;
 
   return (
     <div className="flex flex-col items-center gap-2">
       <svg width="140" height="80" viewBox="0 0 140 80">
-        {/* Background arc */}
         <path
           d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
           fill="none"
-          stroke="#e2e8f0"
-          strokeWidth="12"
-          strokeLinecap="round"
+          stroke="#2a2a2a"
+          strokeWidth="10"
+          strokeLinecap="butt"
         />
-        {/* Foreground arc */}
         <path
           d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
           fill="none"
           stroke={color}
-          strokeWidth="12"
-          strokeLinecap="round"
+          strokeWidth="10"
+          strokeLinecap="butt"
           strokeDasharray={`${dash} ${circumference}`}
           style={{ transition: "stroke-dasharray 0.8s ease" }}
         />
-        <text x={cx} y={cy - 4} textAnchor="middle" fontSize="22" fontWeight="bold" fill={color}>
+        <text x={cx} y={cy - 6} textAnchor="middle" fontSize="22" fontWeight="bold" fill={color} fontFamily="monospace">
           {clampedScore}
         </text>
-        <text x={cx} y={cy + 14} textAnchor="middle" fontSize="10" fill="#94a3b8">
+        <text x={cx} y={cy + 12} textAnchor="middle" fontSize="9" fill="#55554e" fontFamily="monospace">
           / 100
         </text>
       </svg>
-      <span className="text-sm font-semibold" style={{ color }}>{label}</span>
+      <span className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color }}>{label}</span>
     </div>
   );
 }

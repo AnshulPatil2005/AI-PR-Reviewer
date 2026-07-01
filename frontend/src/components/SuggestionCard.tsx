@@ -1,21 +1,16 @@
 interface SuggestionCardProps {
   suggestion: string;
   index: number;
-  darkMode: boolean;
 }
 
-export default function SuggestionCard({ suggestion, index, darkMode }: SuggestionCardProps) {
+export default function SuggestionCard({ suggestion, index }: SuggestionCardProps) {
   return (
-    <div
-      className={`rounded-2xl border p-4 text-sm ${
-        darkMode ? "bg-slate-900/80 border-slate-700 text-slate-200" : "bg-white border-slate-200 text-slate-800"
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">
-          {index}
+    <div className="border border-dashed border-border bg-surface p-4 text-sm">
+      <div className="flex items-start gap-3">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-accent shrink-0 mt-0.5">
+          [{String(index).padStart(2, "0")}]
         </span>
-        <p className="font-medium leading-relaxed">{suggestion}</p>
+        <p className="text-fog-dim leading-relaxed">{suggestion}</p>
       </div>
     </div>
   );
